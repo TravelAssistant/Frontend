@@ -1,38 +1,34 @@
 <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-  <!-- Titel -->
   <h1 class="text-2xl font-bold mb-6">TravelAssistant</h1>
 
-  <!-- Eingabefeld 1 mit Titel und Beschriftung -->
   <div class="w-80 mb-4">
     <h2 class="text-lg font-medium mb-2">Startpunkt</h2>
     <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Wo geht es los?</mat-label>
-      <input matInput placeholder="Geben Sie etwas ein">
+      <mat-label>Wo startet man?</mat-label>
+      <input matInput [(ngModel)]="input1" placeholder="">
     </mat-form-field>
   </div>
 
-  <!-- Eingabefeld 2 mit Titel und Beschriftung -->
   <div class="w-80 mb-4">
     <h2 class="text-lg font-medium mb-2">Ziel</h2>
     <mat-form-field appearance="fill" class="w-full">
-      <mat-label>Wohin geht es?</mat-label>
-      <input matInput placeholder="Geben Sie etwas ein">
+      <mat-label>Wo soll es hingehen?</mat-label>
+      <input matInput [(ngModel)]="input2" placeholder="">
     </mat-form-field>
   </div>
 
-  <!-- Dropdown-Menü mit Titel und Beschriftung -->
   <div class="w-80 mb-6">
     <h2 class="text-lg font-medium mb-2">Fortbewegungsmittel</h2>
     <mat-form-field appearance="fill" class="w-full">
       <mat-label>Wie kommt man hin?</mat-label>
-      <mat-select>
-        <mat-option value="test1">Auto</mat-option>
-        <mat-option value="test2">Flugzeug</mat-option>
-        <mat-option value="test3">Zug</mat-option>
+      <mat-select [(value)]="selectedOption">
+        <mat-option></mat-option>
+        @for (option of dropdownOptions; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+        }
       </mat-select>
     </mat-form-field>
   </div>
 
-  <!-- Abschicken-Button -->
-  <button mat-raised-button color="primary" class="w-40">Abschicken</button>
+  <button mat-raised-button (click)="showAlert()" color="primary" class="w-40">Abschicken</button>
 </div>
