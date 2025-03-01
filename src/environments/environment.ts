@@ -1,4 +1,8 @@
 export const environment = {
   production: true,
-  openRouteServiceApiKey: ''
+  openRouteServiceApiKey: '',
+  auth0: {
+    domain: '',
+    clientId: '',
+  }
 };
