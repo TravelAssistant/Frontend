@@ -4,7 +4,11 @@ import {SelectionComponent} from './components/selection/selection.component';
 
 export const routes: Routes = [
   {
-    component: SelectionComponent,
+    component: ProfileComponent,
     path: '',
+  },
+  {
+    component: SelectionComponent,
+    path: 'start',
   }
 ];
