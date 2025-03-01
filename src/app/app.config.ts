@@ -3,13 +3,14 @@ import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
 import {provideAuth0} from '@auth0/auth0-angular';
+import {environment} from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideAuth0({
-      domain: 'dev-4u2jxny8glnhls6d.eu.auth0.com',
-      clientId: 'Vto5pBhpugSi309XIvWtGfh6mlWlEitZ',
+      domain: environment.auth0.domain,
+      clientId: environment.auth0.clientId,
       authorizationParams: {
         redirect_uri: window.location.origin
       }
