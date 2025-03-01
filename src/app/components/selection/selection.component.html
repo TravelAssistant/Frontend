@@ -1,0 +1,33 @@
+<div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+
+  <div class="w-80 mb-4">
+    <h2 class="text-lg font-medium mb-2">Startpunkt</h2>
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Wo startet man?</mat-label>
+      <input matInput [(ngModel)]="input1" placeholder="">
+    </mat-form-field>
+  </div>
+
+  <div class="w-80 mb-4">
+    <h2 class="text-lg font-medium mb-2">Ziel</h2>
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Wo soll es hingehen?</mat-label>
+      <input matInput [(ngModel)]="input2" placeholder="">
+    </mat-form-field>
+  </div>
+
+  <div class="w-80 mb-6">
+    <h2 class="text-lg font-medium mb-2">Fortbewegungsmittel</h2>
+    <mat-form-field appearance="fill" class="w-full">
+      <mat-label>Wie kommt man hin?</mat-label>
+      <mat-select [(value)]="selectedOption">
+        <mat-option></mat-option>
+        @for (option of dropdownOptions; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <button mat-raised-button (click)="showAlert()" color="primary" class="w-40">Abschicken</button>
+</div>
