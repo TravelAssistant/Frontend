@@ -5,12 +5,12 @@ import {MapPageComponent} from './components/map-page/map-page.component';
 
 export const routes: Routes = [
   {
-    component: ProfileComponent,
+    component: SelectionComponent,
     path: '',
   },
   {
-    component: SelectionComponent,
-    path: 'start',
+    component: ProfileComponent,
+    path: 'profile',
   },
   {
     component: MapPageComponent,
