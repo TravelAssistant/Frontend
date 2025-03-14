@@ -30,8 +30,8 @@ export class MapPageComponent implements OnInit, AfterViewInit {
     private routeLayer!: L.LayerGroup;
     transportMode: string = 'driving';
 
-    startLocationInput: string = 'München';
-    endLocationInput: string = 'Berlin';
+    startLocationInput: string = '';
+    endLocationInput: string = '';
     startLatLng: L.LatLngTuple = [48.137154, 11.576124]; // München default
     endLatLng: L.LatLngTuple = [52.520008, 13.404954]; // Berlin default
 
@@ -94,6 +94,8 @@ export class MapPageComponent implements OnInit, AfterViewInit {
 
             // Map transport mode from selection component to internal representation
             this.mapTransportMode(routeData.transportMode || 'driving');
+
+            this.transportMode = routeData.transportMode || 'driving';
         }
     }
 
@@ -128,6 +130,9 @@ export class MapPageComponent implements OnInit, AfterViewInit {
             case 'Flugzeug':
                 this.transportMode = 'flight';
                 break;
+            case 'driving-flight':
+                this.transportMode = 'driving-flight';
+                break;
             default:
                 this.transportMode = 'driving';
         }
@@ -135,21 +140,28 @@ export class MapPageComponent implements OnInit, AfterViewInit {
 
     ngAfterViewInit(): void {
         this.initializeLeafletMarkerIcons();
-        this.map = L.map('map').setView([48.137154, 11.576124], 10);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+        this.map = L.map('map').setView([48.137154, 11.576124], 5); // Use a wider zoom level initially
+
+        // Add OSM tiles with custom styling class
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            className: 'styled-tiles', // This class is already styled in your CSS
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(this.map);
+
         this.routeLayer = L.layerGroup().addTo(this.map);
 
         const routeData = this.routingService.routeData();
         if (routeData?.startLocation?.lat && routeData?.endLocation?.lat) {
+            // Only load route if data was passed from another page
             this.loadRoute();
-        } else {
-            this.searchLocations();
         }
     }
 
     onTransportChange(event: any) {
         this.mapTransportMode(event.target.value);
-        this.loadRoute();
+        if (this.isValidLatLng(this.startLatLng) && this.isValidLatLng(this.endLatLng)) {
+            this.loadRoute();
+        }
     }
 
     async searchLocations() {
@@ -195,11 +207,12 @@ export class MapPageComponent implements OnInit, AfterViewInit {
     }
 
     async loadRoute() {
-        this.routeLayer.clearLayers();
+        if (!this.isValidLatLng(this.startLatLng) || !this.isValidLatLng(this.endLatLng)) {
+            console.log('Invalid coordinates, not loading route');
+            return;
+        }
 
-        // Add markers for start and end points
-        L.marker(this.startLatLng).addTo(this.routeLayer).bindPopup('Start: ' + this.startLocationInput);
-        L.marker(this.endLatLng).addTo(this.routeLayer).bindPopup('End: ' + this.endLocationInput);
+        this.routeLayer.clearLayers();
 
         switch(this.transportMode) {
             case 'driving':
@@ -209,13 +222,25 @@ export class MapPageComponent implements OnInit, AfterViewInit {
                 await this.loadTrainRoute();
                 break;
             case 'flight':
-                this.loadFlightRoute();
+                await this.loadFlightRoute();
+                break;
+            case 'driving-flight':
+                await this.loadAutoFlightRoute();
                 break;
         }
 
         // Create bounds and fit map to view all markers and route
         const bounds = L.latLngBounds([this.startLatLng, this.endLatLng]);
         this.map.fitBounds(bounds);
+    }
+
+    private isValidLatLng(latLng: L.LatLngTuple): boolean {
+        // Check if the coordinates are non-zero and in reasonable range
+        return latLng &&
+            latLng[0] !== 0 &&
+            latLng[1] !== 0 &&
+            Math.abs(latLng[0]) <= 90 &&
+            Math.abs(latLng[1]) <= 180;
     }
 
     private async loadDrivingRoute() {
@@ -372,24 +397,25 @@ export class MapPageComponent implements OnInit, AfterViewInit {
         // Update markers with airport positions
         this.routeLayer.clearLayers();
 
+        let startLatLng = this.startLatLng;
+        let endLatLng = this.endLatLng;
+
         if (startAirport) {
-          this.startLatLng = [startAirport.lat, startAirport.lon];
-          this.startLocationInput = startAirport.display_name;
+          startLatLng = [startAirport.lat, startAirport.lon];
           L.marker(this.startLatLng).addTo(this.routeLayer)
             .bindPopup(`Departure: ${startAirport.display_name}`);
         }
 
         if (endAirport) {
-          this.endLatLng = [endAirport.lat, endAirport.lon];
-          this.endLocationInput = endAirport.display_name;
-          L.marker(this.endLatLng).addTo(this.routeLayer)
+          endLatLng = [endAirport.lat, endAirport.lon];
+          L.marker(endLatLng).addTo(this.routeLayer)
             .bindPopup(`Arrival: ${endAirport.display_name}`);
         }
 
         this.calculateDirectDistance();
 
         // Create a curved flight path using great circle arc
-        const points = this.createGreatCircleArc(this.startLatLng, this.endLatLng, 100);
+        const points = this.createGreatCircleArc(startLatLng, endLatLng, 100);
 
         // Draw the flight route
         L.polyline(points, {
@@ -493,5 +519,211 @@ export class MapPageComponent implements OnInit, AfterViewInit {
 
     private toDegrees(radians: number): number {
         return radians * 180 / Math.PI;
+    }
+
+    async loadAutoFlightRoute() {
+        try {
+            this.routeLayer.clearLayers();
+
+            // Original start and end points - create proper LatLngTuple objects
+            const originalStart: L.LatLngTuple = [this.startLatLng[0], this.startLatLng[1]];
+            const originalEnd: L.LatLngTuple = [this.endLatLng[0], this.endLatLng[1]];
+            const originalStartName = this.startLocationInput;
+            const originalEndName = this.endLocationInput;
+
+            // Find nearest airports
+            const startAirport = await this.findNearestAirport(originalStart[0], originalStart[1]);
+            const endAirport = await this.findNearestAirport(originalEnd[0], originalEnd[1]);
+
+            if (!startAirport || !endAirport) {
+                throw new Error('Could not find suitable airports');
+            }
+
+            // Add markers for original start/end points
+            L.marker(originalStart).addTo(this.routeLayer)
+                .bindPopup(`Start: ${originalStartName}`);
+            L.marker(originalEnd).addTo(this.routeLayer)
+                .bindPopup(`Destination: ${originalEndName}`);
+
+            // Add airport markers
+            const startAirportPoint: L.LatLngTuple = [startAirport.lat, startAirport.lon];
+            const endAirportPoint: L.LatLngTuple = [endAirport.lat, endAirport.lon];
+
+            L.marker(startAirportPoint).addTo(this.routeLayer)
+                .bindPopup(`Departure Airport: ${startAirport.display_name}`)
+                .setIcon(new L.Icon({
+                    iconUrl: 'assets/airport-icon.png',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                }));
+
+            L.marker(endAirportPoint).addTo(this.routeLayer)
+                .bindPopup(`Arrival Airport: ${endAirport.display_name}`)
+                .setIcon(new L.Icon({
+                    iconUrl: 'assets/airport-icon.png',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                }));
+
+            // Draw route to departure airport
+            await this.drawCarRoute(originalStart, startAirportPoint, 'blue');
+
+            // Draw flight route
+            const flightPoints = this.createGreatCircleArc(startAirportPoint, endAirportPoint, 100);
+            L.polyline(flightPoints, {
+                color: 'red',
+                weight: 3,
+                opacity: 0.7
+            }).addTo(this.routeLayer);
+
+            // Draw route from arrival airport to destination
+            await this.drawCarRoute(endAirportPoint, originalEnd, 'blue');
+
+            // Calculate total distances
+            let totalDistanceToAirport = 0;
+            let totalDistanceFromAirport = 0;
+
+            // Calculate direct flight distance between airports
+            const startLatLng = L.latLng(startAirportPoint[0], startAirportPoint[1]);
+            const endLatLng = L.latLng(endAirportPoint[0], endAirportPoint[1]);
+            const flightDistanceInMeters = startLatLng.distanceTo(endLatLng);
+            const flightDistance = flightDistanceInMeters / 1000;
+
+            // Get road distances
+            try {
+                totalDistanceToAirport = await this.getCarRouteDistance(originalStart, startAirportPoint);
+                totalDistanceFromAirport = await this.getCarRouteDistance(endAirportPoint, originalEnd);
+            } catch (error) {
+                console.error('Error calculating car segments:', error);
+                // Fallback: estimate direct distances
+                const startToAirport = L.latLng(originalStart[0], originalStart[1]).distanceTo(L.latLng(startAirportPoint[0], startAirportPoint[1]));
+                const airportToEnd = L.latLng(endAirportPoint[0], endAirportPoint[1]).distanceTo(L.latLng(originalEnd[0], originalEnd[1]));
+                totalDistanceToAirport = startToAirport / 1000;
+                totalDistanceFromAirport = airportToEnd / 1000;
+            }
+
+            // Add total distance
+            this.distance = Math.round((flightDistance + totalDistanceToAirport + totalDistanceFromAirport) * 10) / 10;
+
+            // Fit map bounds to include all points
+            const bounds = L.latLngBounds([
+                originalStart,
+                startAirportPoint,
+                endAirportPoint,
+                originalEnd
+            ]);
+            this.map.fitBounds(bounds, { padding: [50, 50] });
+
+            // Calculate metrics for the combined journey
+            this.calculateAutoFlightMetrics(flightDistance, totalDistanceToAirport, totalDistanceFromAirport);
+
+        } catch (error) {
+            console.error('Error loading auto-flight route:', error);
+
+            // Fallback to direct flight line if API fails
+            this.calculateDirectDistance();
+            L.polyline([this.startLatLng, this.endLatLng], {
+                color: 'red',
+                dashArray: '5, 10',
+                weight: 3
+            }).addTo(this.routeLayer);
+
+            this.calculateMetrics('flight');
+        }
+    }
+
+    private calculateAutoFlightMetrics(
+        flightDistance: number,
+        carDistanceToAirport: number,
+        carDistanceFromAirport: number
+    ) {
+        // Flight metrics
+        const flightMetrics = this.routeMetrics['flight'];
+        const flightCO2 = flightDistance * flightMetrics.co2Factor;
+
+        // Car metrics
+        const carMetrics = this.routeMetrics['driving'];
+        const carCO2 = (carDistanceToAirport + carDistanceFromAirport) * carMetrics.co2Factor;
+
+        // Total CO2
+        this.co2Emissions = Math.round((flightCO2 + carCO2) * 10) / 10;
+
+        // Calculate flight cost
+        let flightCost;
+        if (flightDistance < 500) {
+            flightCost = flightMetrics.baseCost + flightDistance * 0.15;
+        } else if (flightDistance < 1500) {
+            flightCost = flightMetrics.baseCost + 500 * 0.15 + (flightDistance - 500) * 0.10;
+        } else {
+            flightCost = flightMetrics.baseCost + 500 * 0.15 + 1000 * 0.10 + (flightDistance - 1500) * 0.08;
+        }
+
+        // Calculate car costs
+        const totalCarDistance = carDistanceToAirport + carDistanceFromAirport;
+        // Use the value directly as a number, not accessing it as a function
+        const costPerKm = typeof carMetrics.costPerKm === 'function'
+            ? carMetrics.costPerKm(totalCarDistance)
+            : carMetrics.costPerKm;
+        const carCost = totalCarDistance * costPerKm;
+
+        // Total cost
+        this.cost = Math.round((flightCost + carCost) * 10) / 10;
+    }
+
+    private async drawCarRoute(start: L.LatLngTuple, end: L.LatLngTuple, color: string): Promise<void> {
+        try {
+            // For API, format is [longitude, latitude]
+            const startLonLat = [start[1], start[0]];
+            const endLonLat = [end[1], end[0]];
+            const apiUrl = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${environment.openRouteServiceApiKey}&start=${startLonLat[0]},${startLonLat[1]}&end=${endLonLat[0]},${endLonLat[1]}`;
+
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+
+            if (data.features && data.features.length > 0) {
+                const routeCoords: L.LatLngTuple[] = data.features[0].geometry.coordinates.map(
+                    (coord: number[]) => [coord[1], coord[0]] as L.LatLngTuple
+                );
+                L.polyline(routeCoords, {color, weight: 3}).addTo(this.routeLayer);
+            } else {
+                // Fallback to direct line
+                L.polyline([start, end], {
+                    color,
+                    dashArray: '5, 10'
+                }).addTo(this.routeLayer);
+            }
+        } catch (error) {
+            console.error('Error fetching car route:', error);
+            // Fallback to direct line
+            L.polyline([start, end], {
+                color,
+                dashArray: '5, 10'
+            }).addTo(this.routeLayer);
+        }
+    }
+
+    private async getCarRouteDistance(start: L.LatLngTuple, end: L.LatLngTuple): Promise<number> {
+        // For API, format is [longitude, latitude]
+        const startLonLat = [start[1], start[0]];
+        const endLonLat = [end[1], end[0]];
+        const apiUrl = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${environment.openRouteServiceApiKey}&start=${startLonLat[0]},${startLonLat[1]}&end=${endLonLat[0]},${endLonLat[1]}`;
+
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+
+            if (data.features && data.features.length > 0) {
+                // Extract distance in meters and convert to kilometers
+                const distanceInMeters = data.features[0].properties.summary.distance;
+                return distanceInMeters / 1000;
+            }
+        } catch (error) {
+            console.error('Error calculating car route distance:', error);
+        }
+
+        // Fallback: direct distance
+        const startLatLng = L.latLng(start[0], start[1]);
+        const endLatLng = L.latLng(end[0], end[1]);
+        return startLatLng.distanceTo(endLatLng) / 1000;
     }
 }

@@ -53,7 +53,7 @@ export class SelectionComponent implements OnInit {
   endControl = new FormControl('');
   input1: string = '';
   input2: string = '';
-  dropdownOptions: string[] = ['Auto', 'Flugzeug', 'Zug'];
+  dropdownOptions: string[] = ['Auto', 'Flugzeug', 'Zug', 'Auto-Flug'];
   selectedOption: string = "";
 
   filteredStartOptions: Observable<GeocodingResult[]> = of([]);
@@ -333,8 +333,9 @@ export class SelectionComponent implements OnInit {
     }
   }
 
+  // Current implementation might be wrong
   isTransportSelected(): boolean {
-    return this.selectedOption !== null && this.selectedOption !== "";
+    return !!this.selectedOption && this.selectedOption !== '';
   }
 
   submitRouteData(): void {
@@ -348,6 +349,8 @@ export class SelectionComponent implements OnInit {
         transportMode = 'flight';
       } else if (this.selectedOption === 'Zug') {
         transportMode = 'train';
+      } else if (this.selectedOption === 'Auto-Flug') {
+        transportMode = 'driving-flight';
       }
 
       // Set route data in service using signal

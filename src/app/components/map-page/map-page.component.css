@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700;800&display=swap'); /* Base map container styling */
+:host ::ng-deep .leaflet-container {
+  background-color: #f8f4f0; /* Exact background color from test.json */
+  font-family: 'Noto Sans', Arial, sans-serif;
+}
+
+/* Apply styling to the OSM tiles */
+:host ::ng-deep .styled-tiles {
+  filter: saturate(1.1) contrast(1.1) brightness(1.05) hue-rotate(-5deg);
+}
+
+/* Import Noto Sans font if not already included in your project */
+
+/* Typography for map labels and text */
+:host ::ng-deep .leaflet-tooltip {
+  font-family: 'Noto Sans', Arial, sans-serif;
+  color: #333;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  white-space: nowrap;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 3px;
+  padding: 5px 8px;
+}
+
+/* City labels styling */
+:host ::ng-deep .leaflet-tooltip.city-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+/* Country labels styling */
+:host ::ng-deep .leaflet-tooltip.country-label {
+  font-size: 16px;
+  font-weight: 800;
+  color: #334;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+/* Road labels */
+:host ::ng-deep .leaflet-tooltip.road-label {
+  font-size: 11px;
+  font-weight: 400;
+  color: #765;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+/* Style popups to match theme */
+:host ::ng-deep .leaflet-popup-content-wrapper {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.2);
+  font-family: 'Noto Sans', Arial, sans-serif;
+}
+
+:host ::ng-deep .leaflet-popup-content {
+  margin: 14px 20px;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+}
+
+:host ::ng-deep .leaflet-popup-tip {
+  background-color: white;
+}
+
+/* Style map attribution */
+:host ::ng-deep .leaflet-control-attribution {
+  background-color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  color: #555;
+  font-family: 'Noto Sans', Arial, sans-serif;
+}
+
+/* Style the map controls */
+:host ::ng-deep .leaflet-control-container .leaflet-top .leaflet-control {
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+  font-family: 'Noto Sans', Arial, sans-serif;
+}
+
+/* Style driving route lines */
+:host ::ng-deep .leaflet-interactive[stroke="blue"] {
+  stroke: #3b82f6;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-opacity: 0.9;
+}
+
+/* Style train route lines */
+:host ::ng-deep .leaflet-interactive[stroke="green"] {
+  stroke: #10b981;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-opacity: 0.9;
+}
+
+/* Style flight route lines */
+:host ::ng-deep .leaflet-interactive[stroke="red"] {
+  stroke: #ef4444;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-opacity: 0.7;
+}
+
+/* Style dashed routes */
+:host ::ng-deep .leaflet-interactive[stroke-dasharray] {
+  stroke-opacity: 0.7;
+}
+
+/* Markers and icons */
+:host ::ng-deep .leaflet-marker-icon {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+}
+
+/* Zoom buttons */
+:host ::ng-deep .leaflet-control-zoom a {
+  color: #333;
+  background-color: #ffffff;
+}
+
+:host ::ng-deep .leaflet-control-zoom a:hover {
+  background-color: #f4f4f4;
+}
