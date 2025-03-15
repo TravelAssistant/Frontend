@@ -525,7 +525,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
         try {
             this.routeLayer.clearLayers();
 
-            // Original start and end points - create proper LatLngTuple objects
+            // Original start and end points
             const originalStart: L.LatLngTuple = [this.startLatLng[0], this.startLatLng[1]];
             const originalEnd: L.LatLngTuple = [this.endLatLng[0], this.endLatLng[1]];
             const originalStartName = this.startLocationInput;
@@ -545,11 +545,16 @@ export class MapPageComponent implements OnInit, AfterViewInit {
             L.marker(originalEnd).addTo(this.routeLayer)
                 .bindPopup(`Destination: ${originalEndName}`);
 
-            // Add airport markers
-            const startAirportPoint: L.LatLngTuple = [startAirport.lat, startAirport.lon];
-            const endAirportPoint: L.LatLngTuple = [endAirport.lat, endAirport.lon];
+            // Raw airport coordinates
+            const rawStartAirportPoint: L.LatLngTuple = [startAirport.lat, startAirport.lon];
+            const rawEndAirportPoint: L.LatLngTuple = [endAirport.lat, endAirport.lon];
 
-            L.marker(startAirportPoint).addTo(this.routeLayer)
+            // Get road-snapped coordinates for better routing
+            const startAirportPoint = await this.snapToRoad(rawStartAirportPoint);
+            const endAirportPoint = await this.snapToRoad(rawEndAirportPoint);
+
+            // Add airport markers (using original airport points for visualization)
+            L.marker(rawStartAirportPoint).addTo(this.routeLayer)
                 .bindPopup(`Departure Airport: ${startAirport.display_name}`)
                 .setIcon(new L.Icon({
                     iconUrl: 'assets/airport-icon.png',
@@ -557,7 +562,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
                     iconAnchor: [12, 12]
                 }));
 
-            L.marker(endAirportPoint).addTo(this.routeLayer)
+            L.marker(rawEndAirportPoint).addTo(this.routeLayer)
                 .bindPopup(`Arrival Airport: ${endAirport.display_name}`)
                 .setIcon(new L.Icon({
                     iconUrl: 'assets/airport-icon.png',
@@ -565,31 +570,31 @@ export class MapPageComponent implements OnInit, AfterViewInit {
                     iconAnchor: [12, 12]
                 }));
 
-            // Draw route to departure airport
+            // Draw route to departure airport (using road-snapped point)
             await this.drawCarRoute(originalStart, startAirportPoint, 'blue');
 
-            // Draw flight route
-            const flightPoints = this.createGreatCircleArc(startAirportPoint, endAirportPoint, 100);
+            // Draw flight route (using original airport points)
+            const flightPoints = this.createGreatCircleArc(rawStartAirportPoint, rawEndAirportPoint, 100);
             L.polyline(flightPoints, {
                 color: 'red',
                 weight: 3,
                 opacity: 0.7
             }).addTo(this.routeLayer);
 
-            // Draw route from arrival airport to destination
+            // Draw route from arrival airport to destination (using road-snapped point)
             await this.drawCarRoute(endAirportPoint, originalEnd, 'blue');
 
             // Calculate total distances
             let totalDistanceToAirport = 0;
             let totalDistanceFromAirport = 0;
 
-            // Calculate direct flight distance between airports
-            const startLatLng = L.latLng(startAirportPoint[0], startAirportPoint[1]);
-            const endLatLng = L.latLng(endAirportPoint[0], endAirportPoint[1]);
+            // Use raw airport points for flight distance calculation
+            const startLatLng = L.latLng(rawStartAirportPoint[0], rawStartAirportPoint[1]);
+            const endLatLng = L.latLng(rawEndAirportPoint[0], rawEndAirportPoint[1]);
             const flightDistanceInMeters = startLatLng.distanceTo(endLatLng);
             const flightDistance = flightDistanceInMeters / 1000;
 
-            // Get road distances
+            // Get road distances with the snapped points
             try {
                 totalDistanceToAirport = await this.getCarRouteDistance(originalStart, startAirportPoint);
                 totalDistanceFromAirport = await this.getCarRouteDistance(endAirportPoint, originalEnd);
@@ -631,6 +636,40 @@ export class MapPageComponent implements OnInit, AfterViewInit {
             this.calculateMetrics('flight');
         }
     }
+
+  private async snapToRoad(latLng: L.LatLngTuple): Promise<L.LatLngTuple> {
+    try {
+      const apiUrl = `https://api.openrouteservice.org/v2/snap/driving-car`;
+      const body = {
+        locations: [[latLng[1], latLng[0]]],
+        radius: 5000
+      };
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': environment.openRouteServiceApiKey
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to snap to road: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data && data.locations && data.locations.length > 0) {
+        // Extract the snapped coordinates [lon, lat] and return as [lat, lon]
+        const snappedCoord = data.locations[0].location;
+        return [snappedCoord[1], snappedCoord[0]];
+      }
+      return latLng; // Return original if no snapped point found
+    } catch (error) {
+      console.warn('Error snapping to road, using original point:', error);
+      return latLng;
+    }
+  }
 
     private calculateAutoFlightMetrics(
         flightDistance: number,
