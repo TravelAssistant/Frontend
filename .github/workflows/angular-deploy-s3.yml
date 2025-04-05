@@ -36,4 +36,4 @@ jobs:
         run: npm run build -- --configuration production
 
       - name: Deploy to S3
-        run: aws s3 sync dist/your-app-name s3://${{ secrets.AWS_S3_BUCKET }} --delete
+        run: aws s3 sync dist/frontend/browser s3://${{ secrets.AWS_S3_BUCKET }} --delete
