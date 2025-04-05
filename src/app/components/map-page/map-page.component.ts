@@ -29,6 +29,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
     private map!: L.Map;
     private routeLayer!: L.LayerGroup;
     transportMode: string = 'driving';
+    vehicleType: string = 'petrol';
 
     startLocationInput: string = '';
     endLocationInput: string = '';
@@ -63,6 +64,22 @@ export class MapPageComponent implements OnInit, AfterViewInit {
                 return 0.08;
             }
         }
+    };
+
+    // Metrics configuration for different vehicle types
+    private readonly vehicleMetrics: Record<string, {co2Factor: number, costPerKm: number}> = {
+      'petrol': {
+        co2Factor: 0.12,  // 120g CO2 per km
+        costPerKm: 0.2
+      },
+      'diesel': {
+        co2Factor: 0.11,  // 110g CO2 per km
+        costPerKm: 0.18
+      },
+      'electric': {
+        co2Factor: 0.04,  // 40g CO2 per km (based on current grid mix)
+        costPerKm: 0.14
+      }
     };
 
     private initializeLeafletMarkerIcons() {
@@ -162,6 +179,14 @@ export class MapPageComponent implements OnInit, AfterViewInit {
         if (this.isValidLatLng(this.startLatLng) && this.isValidLatLng(this.endLatLng)) {
             this.loadRoute();
         }
+    }
+
+    // Add this method to handle vehicle type changes
+    onVehicleTypeChange(event: any) {
+      this.vehicleType = event.target.value;
+      if (this.transportMode === 'driving' && this.isValidLatLng(this.startLatLng) && this.isValidLatLng(this.endLatLng)) {
+        this.loadRoute();
+      }
     }
 
     async searchLocations() {
@@ -447,32 +472,42 @@ export class MapPageComponent implements OnInit, AfterViewInit {
         this.distance = Math.round(distanceInMeters / 1000 * 10) / 10;
     }
 
-    private calculateMetrics(mode: 'driving' | 'train' | 'flight') {
-        const metrics = this.routeMetrics[mode];
+  private calculateMetrics(mode: 'driving' | 'train' | 'flight') {
+    const metrics = this.routeMetrics[mode];
 
-        // Calculate CO2 emissions
-        this.co2Emissions = Math.round(this.distance * metrics.co2Factor * 10) / 10;
+    // Calculate CO2 emissions with vehicle type adjustment
+    if (mode === 'driving') {
+      // Use vehicle type specific CO2 factor
+      const vehicleMetrics = this.vehicleMetrics[this.vehicleType];
+      this.co2Emissions = Math.round(this.distance * vehicleMetrics.co2Factor * 10) / 10;
 
-        // Calculate cost
-        let costPerKm = typeof metrics.costPerKm === 'function'
-            ? metrics.costPerKm(this.distance)
-            : metrics.costPerKm;
+      // Calculate cost with vehicle type specific cost per km
+      this.cost = Math.round((metrics.baseCost + (this.distance * vehicleMetrics.costPerKm)) * 10) / 10;
+    } else {
+      // Original calculation for train and flight
+      this.co2Emissions = Math.round(this.distance * metrics.co2Factor * 10) / 10;
 
-        // Special handling for flight with distance-based tiers
-        if (mode === 'flight') {
-            if (this.distance < 500) {
-                this.cost = Math.round((metrics.baseCost + this.distance * 0.15) * 10) / 10;
-            } else if (this.distance < 1500) {
-                this.cost = Math.round((metrics.baseCost + 500 * 0.15 +
-                    (this.distance - 500) * 0.10) * 10) / 10;
-            } else {
-                this.cost = Math.round((metrics.baseCost + 500 * 0.15 + 1000 * 0.10 +
-                    (this.distance - 1500) * 0.08) * 10) / 10;
-            }
+      // Calculate cost
+      let costPerKm = typeof metrics.costPerKm === 'function'
+        ? metrics.costPerKm(this.distance)
+        : metrics.costPerKm;
+
+      // Special handling for flight with distance-based tiers
+      if (mode === 'flight') {
+        if (this.distance < 500) {
+          this.cost = Math.round((metrics.baseCost + this.distance * 0.15) * 10) / 10;
+        } else if (this.distance < 1500) {
+          this.cost = Math.round((metrics.baseCost + 500 * 0.15 +
+            (this.distance - 500) * 0.10) * 10) / 10;
         } else {
-            this.cost = Math.round((metrics.baseCost + (this.distance * costPerKm)) * 10) / 10;
+          this.cost = Math.round((metrics.baseCost + 500 * 0.15 + 1000 * 0.10 +
+            (this.distance - 1500) * 0.08) * 10) / 10;
         }
+      } else {
+        this.cost = Math.round((metrics.baseCost + (this.distance * costPerKm)) * 10) / 10;
+      }
     }
+  }
 
     private createGreatCircleArc(start: L.LatLngTuple, end: L.LatLngTuple, numPoints: number): L.LatLngTuple[] {
         const points: L.LatLngTuple[] = [];
