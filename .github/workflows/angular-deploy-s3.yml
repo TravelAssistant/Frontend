@@ -32,6 +32,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create production environment file
+        run: |
+          cat > src/environments/environment.ts << EOF
+          export const environment = {
+            production: true,
+            openRouteServiceApiKey: '${{ secrets.OPEN_ROUTE_SERVICE_API_KEY }}',
+            openAipApiKey: '',
+            flightApi: {
+              url: 'sky-scanner3.p.rapidapi.com',
+              key: '${{ secrets.FLIGHT_API_KEY }}',
+            },
+            auth0: {
+              domain: '${{ secrets.AUTH0_DOMAIN }}',
+              clientId: '${{ secrets.AUTH0_CLIENT_ID }}',
+            }
+          };
+          EOF
+
       - name: Build Angular App
         run: npm run build -- --configuration production
 
