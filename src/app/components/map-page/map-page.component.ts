@@ -69,16 +69,16 @@ export class MapPageComponent implements OnInit, AfterViewInit {
     // Metrics configuration for different vehicle types
     private readonly vehicleMetrics: Record<string, {co2Factor: number, costPerKm: number}> = {
       'petrol': {
-        co2Factor: 0.12,  // 120g CO2 per km
-        costPerKm: 0.2
+        co2Factor: 0.183,  // 183g 7,7l/100km * 2,37kg/l
+        costPerKm: 0.2    // 7,7l/100km * 1,75€/l + 6€/100km
       },
       'diesel': {
-        co2Factor: 0.11,  // 110g CO2 per km
-        costPerKm: 0.18
+        co2Factor: 0.186,  // 186g CO2 per km 7l/100km*2,65kg/l
+        costPerKm: 0.18   // 6€/100km + 7l/100km * 1,6€
       },
       'electric': {
-        co2Factor: 0.04,  // 40g CO2 per km (based on current grid mix)
-        costPerKm: 0.14
+        co2Factor: 0,  // 0g
+        costPerKm: 0.14 // 6€/100km + 0.4€/kWh * 20kWh/100km
       }
     };
 
