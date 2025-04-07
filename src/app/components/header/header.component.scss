@@ -1,0 +1,189 @@
+// Variables
+$toolbar-height-mobile: 56px;
+$toolbar-height-desktop: 64px;
+$primary-color: #2E7D32;
+$sidenav-width: 250px;
+$sidenav-collapsed-width: 72px;
+$sidenav-padding: 0.75rem;
+$z-index-toolbar: 1000;
+$z-index-sidenav: 1100;
+$sidenav-bg: #E8F5E9;
+
+// Base typography
+h1 {
+  padding: 0 1rem;
+  margin: 0;
+}
+
+h2 {
+  padding: 1rem;
+  margin: 0;
+}
+
+// Toolbar styles (fixed above content)
+mat-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: $z-index-toolbar;
+  height: $toolbar-height-mobile;
+  background: $primary-color;
+  color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+
+  @media screen and (min-width: 600px) {
+    height: $toolbar-height-desktop;
+  }
+}
+
+// Sidenav container (full height)
+mat-sidenav-container {
+  height: 100vh;
+  margin-top: $toolbar-height-mobile;
+  background: #f5f5f5;
+
+  @media screen and (min-width: 600px) {
+    margin-top: $toolbar-height-desktop;
+  }
+}
+
+// Sidenav styles (floating above everything)
+mat-sidenav {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: $z-index-sidenav;
+  width: $sidenav-width;
+  background: $sidenav-bg;
+  box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  border-top-right-radius: 10px;  // Abrundung der oberen rechten Ecke
+  border-bottom-right-radius: 10px;  // Abrundung der unteren rechten Ecke
+
+
+  &.mat-sidenav-opened {
+    transform: translateX(0);
+  }
+
+  // Container für X-Icon und Website-Name nebeneinander
+  .top-bar {
+    display: flex;
+    justify-content: space-between;  // Verteilt den Platz zwischen dem Namen und dem X-Icon
+    align-items: center;
+    padding: 10px;
+    position: relative;
+  }
+
+  // Close button in the sidebar
+  .close-button {
+    cursor: pointer;
+    z-index: $z-index-sidenav + 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;  // Fixiert das Icon innerhalb der Sidebar
+    top: 10px;  // Positioniert das X-Icon 10px vom oberen Rand
+    right: 10px;  // Positioniert das X-Icon 10px vom rechten Rand
+
+    mat-icon {
+      color: #2E7D32; // Oder eine andere Farbe
+      font-size: 30px; // Passe die Größe des Icons an
+    }
+  }
+
+  .website-name {
+    font-size: 15px;
+    font-weight: normal;
+    color: #2E7D32;  // Farbe des Namens
+  }
+
+  mat-nav-list {
+    margin-top: 10px;  // Platzierung der Liste unter dem X-Icon
+    display: flex;
+    flex-direction: column;
+
+    a {
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      padding: $sidenav-padding;
+
+      mat-icon {
+        color: rgba(0, 0, 0, 0.54); // Farbanpassung für die Icons
+      }
+    }
+  }
+  .entry {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: $sidenav-padding;
+    color: rgba(0, 0, 0, 0.87);
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    mat-icon {
+      color: rgba(0, 0, 0, 0.54);
+    }
+  }
+}
+
+// Sidenav content area (main content)
+mat-sidenav-content {
+  padding-top: $toolbar-height-mobile + 20px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  transition: margin-left 0.3s ease;
+
+  @media screen and (min-width: 600px) {
+    padding-top: $toolbar-height-desktop + 20px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+// Collapsed state styles
+.collapsed {
+  width: $sidenav-collapsed-width !important;
+
+  .entry {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+
+    span {
+      display: none;
+    }
+  }
+}
+
+// Special case when sidenav is open
+.sidenav-open {
+  mat-sidenav-content {
+    @media screen and (max-width: 959px) {
+      // Optional: Dim content when sidenav is open on mobile
+      &::after {
+        content: '';
+        position: fixed;
+        top: $toolbar-height-mobile;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: $z-index-sidenav - 1;
+
+        @media screen and (min-width: 600px) {
+          top: $toolbar-height-desktop;
+        }
+      }
+    }
+  }
+}

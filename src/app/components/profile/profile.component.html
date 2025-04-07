@@ -1,9 +1,1 @@
-<ng-container >
-  <button (click)="auth.logout({ logoutParams: { returnTo: document.location.origin } })">
-    Log out
-  </button>
-</ng-container>
 
-@if (auth.user$ | async; as user) {
-  {{ user.email }}
-}
