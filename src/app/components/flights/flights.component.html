@@ -1,3 +1,45 @@
 <p>flights works!</p>
 
 <button mat-raised-button (click)="click()">flight</button>
+
+<button mat-raised-button (click)="click2()">Tabelle anzeigen</button>
+
+<table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
+
+  <!-- Price Column -->
+  <ng-container matColumnDef="price">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Price </th>
+    <td mat-cell *matCellDef="let element"> {{element.price | currency}} </td>
+  </ng-container>
+
+  <!-- Direct Column -->
+  <ng-container matColumnDef="direct">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Direct </th>
+    <td mat-cell *matCellDef="let element"> {{element.direct ? 'Yes' : 'No'}} </td>
+  </ng-container>
+
+  <!-- Departure Date Column -->
+  <ng-container matColumnDef="departureDate">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Departure Date </th>
+    <td mat-cell *matCellDef="let element"> {{element.departureDate}} </td>
+  </ng-container>
+
+  <!-- Origin Column -->
+  <ng-container matColumnDef="origin">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Origin </th>
+    <td mat-cell *matCellDef="let element"> {{element.origin}} </td>
+  </ng-container>
+
+  <!-- Destination Column -->
+  <ng-container matColumnDef="destination">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Destination </th>
+    <td mat-cell *matCellDef="let element"> {{element.destination}} </td>
+  </ng-container>
+
+  <!-- Table Header and Rows -->
+  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+</table>
+
+
