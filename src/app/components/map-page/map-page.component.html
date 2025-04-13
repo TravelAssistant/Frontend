@@ -49,8 +49,12 @@
         <h3 class="text-gray-700 font-semibold">CO₂ Emissionen</h3>
         <p class="text-lg font-bold">{{ co2Emissions }} kg</p>
     </div>
-    <div class="p-4 bg-gray-100 rounded-xl shadow-md w-full text-center">
+    <div class="p-4 bg-gray-100 rounded-xl shadow-md w-full text-center" (click)="openDeepLink()">
         <h3 class="text-gray-700 font-semibold">Kosten</h3>
         <p class="text-lg font-bold">{{ cost }} €</p>
     </div>
 </div>
+
+@if (progressSpinner) {
+        <mat-spinner diameter="50"></mat-spinner>
+}
