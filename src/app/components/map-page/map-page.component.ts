@@ -894,7 +894,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
       try {
         const response = await fetch(url, options);
         const result = await response.json();
-        this.cheepestFlightDeepLink = result.data.itinerary.pricingOptions[0].pricingItems[0].uri;
+        this.cheapestFlightDeepLink = result.data.itinerary.pricingOptions[0].pricingItems[0].uri;
       } catch (error) {
         console.error(error);
       }
@@ -902,6 +902,6 @@ export class MapPageComponent implements OnInit, AfterViewInit {
 
 
   openDeepLink() {
-    window.open(this.cheepestFlightDeepLink, '_blank');
+    window.open(this.cheapestFlightDeepLink, '_blank');
   }
 }

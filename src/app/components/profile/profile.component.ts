@@ -5,7 +5,7 @@ import {RouterOutlet} from '@angular/router';
 
 @Component({
   selector: 'app-profile',
-  imports: [AsyncPipe,RouterOutlet],
+  imports: [],
   templateUrl: './profile.component.html',
   standalone: true,
   styleUrl: './profile.component.css'
