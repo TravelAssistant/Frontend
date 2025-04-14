@@ -19,6 +19,20 @@
         </mat-form-field>
       </div>
 
+      <!-- Date selection (nach dem Fortbewegungsmittel-Feld) -->
+      <div class="w-80 mb-6">
+        <h2 class="text-lg font-medium mb-2">Datum</h2>
+        <mat-form-field appearance="fill" class="w-full">
+          <mat-label>Reisedatum wählen</mat-label>
+          <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" [disabled]="!isTransportSelected()">
+          <mat-hint>MM/DD/YYYY</mat-hint>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+
+
       <!-- Start location with autocomplete -->
       <div class="w-80 mb-4">
         <h2 class="text-lg font-medium mb-2">Startpunkt</h2>
