@@ -40,7 +40,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
     distance: number = 0;
     co2Emissions: number = 0;
     cost: number = 0;
-    cheepestFlightDeepLink: string = '';
+    cheapestFlightDeepLink: string = '';
     progressSpinner: boolean = true;
 
     // Route metrics configuration by transport type
