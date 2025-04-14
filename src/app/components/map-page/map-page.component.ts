@@ -836,7 +836,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
       try {
         const response = await fetch(apiUrl1, options);
         const result = await response.json();
-        return result.data[0].CityId;
+        return result.data[0].placeId;
       } catch (error) {
         console.error('Error fetching airport code:', error);
         return '';
