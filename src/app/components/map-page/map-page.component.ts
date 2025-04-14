@@ -836,7 +836,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
       try {
         const response = await fetch(apiUrl1, options);
         const result = await response.json();
-        return result.data[0].placeId;
+        return result.data[0].PlaceId;
       } catch (error) {
         console.error('Error fetching airport code:', error);
         return '';
@@ -860,7 +860,6 @@ export class MapPageComponent implements OnInit, AfterViewInit {
       try {
         const response = await fetch(url, options);
         const result = await response.json();
-        console.log(result.data.token);
         flightSession.push(result.data.token)
         const itineraries = result.data.itineraries;
         let cheapestPrice = Infinity;
