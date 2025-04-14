@@ -836,7 +836,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
       try {
         const response = await fetch(apiUrl1, options);
         const result = await response.json();
-        return result.data[0].placeId;
+        return result.data[0].PlaceId;
       } catch (error) {
         console.error('Error fetching airport code:', error);
         return '';
@@ -844,11 +844,14 @@ export class MapPageComponent implements OnInit, AfterViewInit {
     }
 
     private async getOneWay(startSkyId: string, endSkyId: string): Promise<string[]>{
-      // get today date
-      const today = new Date().toISOString().split('T')[0];
+      // get date
+      const today = new Date();
+      const tomorrow = new Date();
+      tomorrow.setDate(today.getDate() + 1);
+      const tomorrowString = tomorrow.toISOString().split('T')[0]
       const flightSession: string[] = [];
       const url = `https://sky-scanner3.p.rapidapi.com/flights/search-one-way?fromEntityId=${startSkyId}&toEntityId=
-      ${endSkyId}&departDate=${today}&cabinClass=economy`;
+      ${endSkyId}&departDate=${tomorrowString}&cabinClass=economy`;
       const options = {
         method: 'GET',
         headers: {
@@ -860,7 +863,6 @@ export class MapPageComponent implements OnInit, AfterViewInit {
       try {
         const response = await fetch(url, options);
         const result = await response.json();
-        console.log(result.data.token);
         flightSession.push(result.data.token)
         const itineraries = result.data.itineraries;
         let cheapestPrice = Infinity;
