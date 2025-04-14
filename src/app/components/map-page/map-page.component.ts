@@ -116,10 +116,8 @@ export class MapPageComponent implements OnInit, AfterViewInit {
 
         this.getAirportCode(startCity).then(
           (skyId) => {
-            console.log(skyId)
             this.getAirportCode(endCity).then(
               (skyId2) => {
-                console.log(skyId2)
                 this.getOneWay(skyId, skyId2).then(
                   (flightSession) => {
                     this.getCheapestFlight(flightSession[0], flightSession[1]).then(
@@ -851,7 +849,6 @@ export class MapPageComponent implements OnInit, AfterViewInit {
       const tomorrow = new Date();
       tomorrow.setDate(today.getDate() + 1);
       const tomorrowString = tomorrow.toISOString().split('T')[0]
-      console.log(tomorrowString);
       const flightSession: string[] = [];
       const url = `https://sky-scanner3.p.rapidapi.com/flights/search-one-way?fromEntityId=${startSkyId}&toEntityId=
       ${endSkyId}&departDate=${tomorrowString}&cabinClass=economy`;
