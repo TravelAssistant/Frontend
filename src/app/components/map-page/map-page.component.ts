@@ -4,6 +4,7 @@ import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {environment} from '../../../environments/environment';
 import {RoutingService} from "../../service/routing/routing.service";
+import {MatProgressSpinner} from '@angular/material/progress-spinner';
 
 interface GeocodingResult {
     lat: number;
@@ -21,7 +22,7 @@ interface RouteMetrics {
 @Component({
     selector: 'app-map-page',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatProgressSpinner],
     templateUrl: './map-page.component.html',
     styleUrl: './map-page.component.css'
 })
@@ -39,6 +40,8 @@ export class MapPageComponent implements OnInit, AfterViewInit {
     distance: number = 0;
     co2Emissions: number = 0;
     cost: number = 0;
+    cheapestFlightDeepLink: string = '';
+    progressSpinner: boolean = true;
 
     // Route metrics configuration by transport type
     private readonly routeMetrics: Record<string, RouteMetrics> = {
@@ -103,17 +106,37 @@ export class MapPageComponent implements OnInit, AfterViewInit {
         // Get route data from service using signal
         const routeData = this.routingService.routeData();
 
-        if (routeData) {
-            // Process start location
-            this.processLocationInput('start', routeData.startLocation);
-            // Process end location
-            this.processLocationInput('end', routeData.endLocation);
+      if (routeData) {
+        // Process start location
+        this.processLocationInput('start', routeData.startLocation);
+        const startCity = routeData.startLocation.display_name.split(',')[0];
+        // Process end location
+        this.processLocationInput('end', routeData.endLocation);
+        const endCity = routeData.endLocation.display_name.split(',')[0];
 
-            // Map transport mode from selection component to internal representation
-            this.mapTransportMode(routeData.transportMode || 'driving');
+        this.getAirportCode(startCity).then(
+          (skyId) => {
+            this.getAirportCode(endCity).then(
+              (skyId2) => {
+                this.getOneWay(skyId, skyId2).then(
+                  (flightSession) => {
+                    this.getCheapestFlight(flightSession[0], flightSession[1]).then(
+                      () => {
+                        this.progressSpinner = false;
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
 
-            this.transportMode = routeData.transportMode || 'driving';
-        }
+        // Map transport mode from selection component to internal representation
+        this.mapTransportMode(routeData.transportMode || 'driving');
+
+        this.transportMode = routeData.transportMode || 'driving';
+      }
     }
 
     private processLocationInput(type: 'start' | 'end', location: any): void {
@@ -800,4 +823,85 @@ export class MapPageComponent implements OnInit, AfterViewInit {
         const endLatLng = L.latLng(end[0], end[1]);
         return startLatLng.distanceTo(endLatLng) / 1000;
     }
+
+    private async getAirportCode(city: string): Promise<string> {
+      const apiUrl1 = `https://sky-scanner3.p.rapidapi.com/web/flights/auto-complete?query=${encodeURIComponent(city)}`;
+      const options = {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': environment.flightApi.key,
+          'X-RapidAPI-Host': environment.flightApi.url
+        }
+      };
+      try {
+        const response = await fetch(apiUrl1, options);
+        const result = await response.json();
+        return result.data[0].placeId;
+      } catch (error) {
+        console.error('Error fetching airport code:', error);
+        return '';
+      }
+    }
+
+    private async getOneWay(startSkyId: string, endSkyId: string): Promise<string[]>{
+      // get today date
+      const today = new Date().toISOString().split('T')[0];
+      const flightSession: string[] = [];
+      const url = `https://sky-scanner3.p.rapidapi.com/flights/search-one-way?fromEntityId=${startSkyId}&toEntityId=
+      ${endSkyId}&departDate=${today}&cabinClass=economy`;
+      const options = {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': environment.flightApi.key,
+          'X-RapidAPI-Host': environment.flightApi.url
+        }
+      };
+
+      try {
+        const response = await fetch(url, options);
+        const result = await response.json();
+        console.log(result.data.token);
+        flightSession.push(result.data.token)
+        const itineraries = result.data.itineraries;
+        let cheapestPrice = Infinity;
+        let cheapestFlight: any = null;
+        for (const itinerary of itineraries) {
+          const price = itinerary.price.raw;
+          if (price < cheapestPrice) {
+            cheapestPrice = price;
+            cheapestFlight = itinerary;
+          }
+        }
+        flightSession.push(cheapestFlight.id);
+        this.cost = cheapestFlight.price.formatted;
+        return flightSession;
+      } catch (error) {
+        console.error(error);
+        return [];
+      }
+    }
+
+    private async getCheapestFlight(token: string, itineraryId: string){
+      const url = `https://sky-scanner3.p.rapidapi.com/flights/detail?token=${token}&itineraryId=${itineraryId}`;
+      const options = {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': environment.flightApi.key,
+          'X-RapidAPI-Host': environment.flightApi.url
+        }
+      };
+
+      try {
+        const response = await fetch(url, options);
+        const result = await response.json();
+        this.cheepestFlightDeepLink = result.data.itinerary.pricingOptions[0].pricingItems[0].uri;
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+
+  openDeepLink() {
+    window.open(this.cheepestFlightDeepLink, '_blank');
+  }
 }
