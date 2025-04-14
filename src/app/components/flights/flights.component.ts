@@ -1,4 +1,4 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import {FlightApiService} from '../../service/flight-api/flight-api.service';
 import {MatButton, MatIconButton} from '@angular/material/button';
@@ -6,7 +6,8 @@ import {MatIcon} from '@angular/material/icon';
 import {MatTableDataSource, MatTableModule} from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import {MatSort, MatSortModule} from '@angular/material/sort';
-import {CurrencyPipe} from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { CommonModule } from '@angular/common';
 
 const airportMapping: { [key: string]: string } = {
   DUS: "Düsseldorf International Airport",
@@ -71,15 +72,24 @@ export interface Flight {
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
-    CurrencyPipe,
+    MatCardModule,
+    CommonModule,
+
   ],
   templateUrl: './flights.component.html',
   styleUrl: './flights.component.css',
   standalone: true,
   providers: [FlightApiService]
 })
-export class FlightsComponent {
+export class FlightsComponent implements OnInit{
   constructor(private apiService: FlightApiService){}
+
+
+
+
+
+
+
 
   click() {
     this.apiService.getAllFlights('DUS', 'BCN').subscribe(
@@ -103,8 +113,8 @@ export class FlightsComponent {
 
   @ViewChild(MatSort) sort!: MatSort;
 
-  click2():void{
-    this.apiService.getAllFlights('DUS', 'BCN').subscribe(
+  ngOnInit(): void {
+    this.apiService.getAllFlights('DUS', 'AMS').subscribe(
       (response: any) => {
         const flights = response.data.flightQuotes.results.map((flight: any) => ({
           price: flight.content.rawPrice,
@@ -123,6 +133,25 @@ export class FlightsComponent {
       error => console.error(error)
     );
 
+    this.loadFlights('DUS', 'MUC');
   }
+
+  dataSource2: any[] = [];
+
+  private loadFlights(origin: string, destination: string) {
+    this.apiService.getAllFlights(origin, destination).subscribe(
+      (response: any) => {
+        this.dataSource2 = response.data.flightQuotes.results.map((flight: any) => ({
+          price: flight.content.rawPrice,
+          direct: flight.content.direct,
+          departureDate: flight.content.outboundLeg.localDepartureDateLabel,
+          origin: flight.content.outboundLeg.originAirport.skyCode,
+          destination: flight.content.outboundLeg.destinationAirport.skyCode,
+        }));
+      },
+      error => console.error(error)
+    );
+  }
+
 
 }

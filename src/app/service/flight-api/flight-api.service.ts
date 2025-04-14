@@ -13,7 +13,7 @@ export class FlightApiService {
   constructor(private http: HttpClient) { }
 
   getAllFlights(from: string, to: string): Observable<any> {
-    return this.http.get(`https://${this.apiUrl}/flights/search-one-way?fromEntityId=${from}&toEntityId=${to}&cabinClass=economy`, {
+    return this.http.get(`https://${this.apiUrl}/flights/search-one-way?fromEntityId=${from}&toEntityId=${to}&cabinClass=economy&currency=EUR&wholeMonthDepart=2025-04`, {
       headers: {
         'x-rapidapi-host': this.apiUrl,
         'x-rapidapi-key': this.apiKey

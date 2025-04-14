@@ -1,0 +1,27 @@
+/* Container for the cards */
+.card-container {
+  display: flex;
+  flex-direction: column; /* Stack cards vertically */
+  gap: 16px; /* Add spacing between cards */
+  align-items: center; /* Center cards horizontally */
+}
+
+/* Styling for each card */
+.flight-card {
+  width: 100%; /* Cards take full width of the container */
+  max-width: 400px; /* Optional: Limit the maximum width */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Animation for hover */
+}
+
+/* Hover effect */
+.flight-card:hover {
+  transform: scale(1.1); /* Slightly enlarge the card on hover */
+  box-shadow: 0 8px 16px rgba(16, 165, 67, 0.8); /* Blauer Schatten */
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .flight-card {
+    width: 90%; /* Cards take 90% of the screen width on smaller devices */
+  }
+}
