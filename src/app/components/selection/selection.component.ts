@@ -12,6 +12,10 @@ import * as L from 'leaflet';
 import {AsyncPipe} from '@angular/common';
 import {RoutingService} from '../../service/routing/routing.service';
 import {Router} from '@angular/router';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+
 
 interface GeocodingResult {
   lat: number;
@@ -43,7 +47,10 @@ interface GeocodingResult {
     FormsModule,
     ReactiveFormsModule,
     MatAutocompleteModule,
-    AsyncPipe
+    AsyncPipe,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatFormFieldModule
   ],
   templateUrl: './selection.component.html',
   styleUrl: './selection.component.css'
@@ -334,6 +341,7 @@ export class SelectionComponent implements OnInit {
   }
 
   // Current implementation might be wrong
+  selectedDate: Date | null = null;
   isTransportSelected(): boolean {
     return !!this.selectedOption && this.selectedOption !== '';
   }
