@@ -56,12 +56,12 @@ export class FlightsComponent implements OnInit{
 
   origin = 'Düsseldorf';
   destination = 'München';
-  departDate = '2025-04-22';
+  departDate = '2025-04-24';
   flights: Flight[] = [];
   selectedFlight: any = null;
   loading = false;
   error = '';
-
+  showAllFlights = false;
 
 
   constructor(private apiService: FlightApiService){}
@@ -141,16 +141,23 @@ export class FlightsComponent implements OnInit{
 
     this.apiService.getFlightDetails(flight.token!, flight.id).subscribe({
       next: (response: any) => {
-        if (response.data && response.data.itinerary) {
-          this.selectedFlight = response.data.itinerary;
-          this.loading = false;
+        const pricingOptions = response.data?.itinerary?.pricingOptions;
+        if (pricingOptions && pricingOptions.length > 0) {
+          // Du kannst hier auch eine Auswahl anbieten, falls mehrere Optionen gewünscht sind
+          const uri = pricingOptions[0].pricingItems[0]?.uri;
+          if (uri) {
+            window.open(uri, '_blank'); // Im neuen Tab öffnen
+            // window.location.href = uri; // Im selben Tab öffnen
+          } else {
+            this.error = 'Keine Buchungs-URL gefunden';
+          }
         } else {
-          this.error = 'Keine Flugdetails gefunden';
-          this.loading = false;
+          this.error = 'Keine Buchungsoptionen gefunden';
         }
+        this.loading = false;
       },
       error: (err) => {
-        this.error = 'Fehler beim Abrufen der Flugdetails: ' + err.message;
+        this.error = 'Fehler beim Abrufen der Buchungs-URL: ' + err.message;
         this.loading = false;
       }
     });
@@ -166,4 +173,10 @@ export class FlightsComponent implements OnInit{
     const date = new Date(dateString);
     return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
   }
+
+  get visibleFlights() {
+    return this.showAllFlights ? this.flights : this.flights.slice(0, 9);
+  }
+
+
 }
