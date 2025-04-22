@@ -2,10 +2,7 @@ export const environment = {
   production: true,
   openRouteServiceApiKey: '',
   openAipApiKey: '',
-  flightApi: {
-    url: '',
-    key: '',
-  },
+  travelApiUrl: '',
   auth0: {
     domain: '',
     clientId: '',

@@ -7,8 +7,8 @@ import {Observable} from 'rxjs';
   providedIn: 'root'
 })
 export class FlightApiService {
-  private apiUrl= environment.flightApi.url;
-  private apiKey = environment.flightApi.key;
+  private apiUrl= "environment.flightApi.url";
+  private apiKey = "environment.flightApi.key";
 
   constructor(private http: HttpClient) { }
 
