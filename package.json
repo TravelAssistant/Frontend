@@ -21,6 +21,7 @@
     "@angular/platform-browser-dynamic": "^19.1.0",
     "@angular/router": "^19.1.0",
     "@auth0/auth0-angular": "^2.2.3",
+    "@fortawesome/fontawesome-free": "^6.7.2",
     "@tailwindcss/postcss": "^4.0.8",
     "leaflet": "^1.9.4",
     "postcss": "^8.5.3",
