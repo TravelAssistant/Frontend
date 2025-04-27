@@ -1,10 +1,10 @@
 import { Component, ViewChild, AfterViewInit } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { MatIconModule} from '@angular/material/icon';
 import { MatSidenavModule, MatSidenavContainer, MatSidenav } from '@angular/material/sidenav';
 import { MatListItem, MatNavList } from '@angular/material/list';
-import { RouterOutlet } from '@angular/router';
+import {Router, RouterOutlet, RouterLink} from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {AuthModule, AuthService } from '@auth0/auth0-angular';
 
@@ -20,6 +20,7 @@ import {AuthModule, AuthService } from '@auth0/auth0-angular';
     MatNavList,
     MatListItem,
     RouterOutlet,
+    RouterLink,
     AuthModule,
   ],
   templateUrl: './header.component.html',
@@ -35,7 +36,11 @@ export class HeaderComponent implements AfterViewInit {
   isSidenavOpened = false; // <-- hinzugefügt
   isAuthenticated: boolean = false; // Status der Authentifizierung
 
-  constructor(private observer: BreakpointObserver, public auth: AuthService) {}
+  constructor(
+    private observer: BreakpointObserver,
+    public auth: AuthService,
+    private router: Router) {}
+
 
   ngOnInit() {
     this.auth.isAuthenticated$.subscribe((isAuthenticated) => {
@@ -64,5 +69,10 @@ export class HeaderComponent implements AfterViewInit {
 
   logout(): void {
     this.auth.logout({  }); // Loggt den Benutzer aus und leitet ihn zurück zur Startseite
+  }
+  goToHome() {
+    this.sidenav.close();
+    this.router.navigate(['/']);
+
   }
 }
