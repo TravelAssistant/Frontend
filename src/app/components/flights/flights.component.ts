@@ -15,6 +15,7 @@ import { forkJoin } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import {MatCheckbox} from '@angular/material/checkbox';
 import {MatSlideToggle} from '@angular/material/slide-toggle';
+import {MatButtonToggle, MatButtonToggleGroup} from '@angular/material/button-toggle';
 
 interface Flight {
   id: string;
@@ -51,7 +52,9 @@ interface Flight {
     FormsModule,
     ReactiveFormsModule,
     MatCheckbox,
-    MatSlideToggle
+    MatSlideToggle,
+    MatButtonToggle,
+    MatButtonToggleGroup
   ],
   templateUrl: './flights.component.html',
   styleUrl: './flights.component.css',
@@ -71,7 +74,67 @@ export class FlightsComponent implements OnInit{
   returnDate = '';
   isRoundtrip = false;
 
+// Umschalt-Status: 'flug', 'auto', 'zug'
+  selectedMode: 'flug' | 'auto' | 'zug' = 'flug';
 
+// Mockdaten für Zug/Bus
+  trainJourneys = [
+    {
+      id: 'T1',
+      provider: 'Deutsche Bahn',
+      departure: '2025-04-24T07:15:00',
+      arrival: '2025-04-24T11:30:00',
+      duration: 255,
+      origin: this.origin,
+      destination: this.destination,
+      price: 69.99,
+      direct: true
+    },
+    {
+      id: 'T2',
+      provider: 'FlixTrain',
+      departure: '2025-04-24T09:45:00',
+      arrival: '2025-04-24T14:10:00',
+      duration: 265,
+      origin: this.origin,
+      destination: this.destination,
+      price: 39.90,
+      direct: false
+    },
+    {
+      id: 'T3',
+      provider: 'FlixTrain',
+      departure: '2025-04-24T09:45:00',
+      arrival: '2025-04-24T14:10:00',
+      duration: 265,
+      origin: this.origin,
+      destination: this.destination,
+      price: 29.90,
+      direct: false
+    },
+    {
+      id: 'T4',
+      provider: 'FlixTrain',
+      departure: '2025-04-24T09:45:00',
+      arrival: '2025-04-24T14:10:00',
+      duration: 265,
+      origin: this.origin,
+      destination: this.destination,
+      price: 59.90,
+      direct: false
+    },
+    {
+      id: 'T5',
+      provider: 'FlixTrain',
+      departure: '2025-04-24T09:45:00',
+      arrival: '2025-04-24T14:10:00',
+      duration: 265,
+      origin: this.origin,
+      destination: this.destination,
+      price: 99.90,
+      direct: true
+    }
+  ];
 
   constructor(private apiService: FlightApiService){}
 
@@ -174,6 +237,52 @@ export class FlightsComponent implements OnInit{
       }
     });
   }
+
+  searchCar() {
+    // Setze die Anzeige für Auto, z.B. ein Bild und Text
+    this.flights = [];
+    this.error = '';
+    // Optional: eigene Properties für Auto-Anzeige setzen
+  }
+
+  searchTrain() {
+    // Hier werden Mockdaten für Zug/Bus gesetzt
+    this.flights = []; // Leere ggf. Flugdaten
+    this.error = '';
+    this.trainJourneys = [
+      {
+        id: 'T1',
+        provider: 'Deutsche Bahn',
+        departure: '2025-04-24T07:15:00',
+        arrival: '2025-04-24T11:30:00',
+        duration: 255,
+        origin: this.origin,
+        destination: this.destination,
+        price: 69.99,
+        direct: true
+      }
+    ];
+  }
+
+
+  onSearch() {
+    switch (this.selectedMode) {
+      case 'flug':
+        this.searchFlights();
+        break;
+      case 'auto':
+        this.searchCar();
+        break;
+      case 'zug':
+        this.searchTrain();
+        break;
+      default:
+        this.searchFlights();
+    }
+  }
+
+
+
 
   formatDuration(minutes: number): string {
     const hours = Math.floor(minutes / 60);

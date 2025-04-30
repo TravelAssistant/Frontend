@@ -1,3 +1,18 @@
+<div class="mode-toggle-container" style="display: flex; justify-content: center; margin-bottom: 24px;">
+  <mat-button-toggle-group [(ngModel)]="selectedMode"  exclusive>
+    <mat-button-toggle value="flug">
+      <mat-icon>flight</mat-icon> Flug
+    </mat-button-toggle>
+    <mat-button-toggle value="auto">
+      <mat-icon>directions_car</mat-icon> Auto
+    </mat-button-toggle>
+    <mat-button-toggle value="zug">
+      <mat-icon>train</mat-icon> Zug/Bus
+    </mat-button-toggle>
+  </mat-button-toggle-group>
+</div>
+
+<!-- Search-Container: IMMER SICHTBAR -->
 <div class="flight-search-container">
   <mat-card class="search-card">
     <mat-card-header>
@@ -6,30 +21,28 @@
     <mat-card-content>
       <div class="search-form">
         <mat-form-field>
-          <mat-label>Abflugort</mat-label>
-          <input matInput [(ngModel)]="origin">
+          <mat-label>Abflugort / Start</mat-label>
+          <input matInput [(ngModel)]="origin" autocomplete="off">
         </mat-form-field>
         <mat-form-field>
           <mat-label>Zielort</mat-label>
-          <input matInput [(ngModel)]="destination">
+          <input matInput [(ngModel)]="destination" autocomplete="off">
         </mat-form-field>
         <mat-form-field>
-          <mat-label>Abflugdatum (YYYY-MM-DD)</mat-label>
-          <input matInput [(ngModel)]="departDate" placeholder="z.B. 2025-04-22">
+          <mat-label>Abfahrts-/Abflugdatum (YYYY-MM-DD)</mat-label>
+          <input matInput [(ngModel)]="departDate" placeholder="z.B. 2025-04-22" autocomplete="off">
         </mat-form-field>
         <mat-form-field>
-          <mat-label>Rückflugdatum</mat-label>
-          <input matInput [(ngModel)]="returnDate" placeholder="z.B. 2025-05-02">
+          <mat-label>Rückflugdatum (optional)</mat-label>
+          <input matInput [(ngModel)]="returnDate" placeholder="z.B. 2025-05-02" autocomplete="off">
         </mat-form-field>
         <mat-slide-toggle [(ngModel)]="isRoundtrip">
           Hin- und Rückflug
         </mat-slide-toggle>
-
-
       </div>
     </mat-card-content>
     <mat-card-actions>
-      <button mat-raised-button color="primary" (click)="searchFlights()">
+      <button mat-raised-button color="primary" (click)="onSearch()">
         <mat-icon>search</mat-icon> Suchen
       </button>
     </mat-card-actions>
@@ -43,8 +56,14 @@
   <div *ngIf="error" class="error-message">
     <p>{{ error }}</p>
   </div>
+</div>
 
-  <div class="flight-results" *ngIf="flights.length > 0 && !loading && !selectedFlight">
+
+
+<!-- Flug-Modus: Suchformular & Flüge -->
+<div *ngIf="selectedMode === 'flug'">
+
+  <div class=" flight-search-container flight-results" *ngIf="flights.length > 0 && !loading && !selectedFlight">
     <h2>Verfügbare Flüge</h2>
     <div class="flight-cards">
       <mat-card *ngFor="let flight of flights | slice:0:(showAllFlights ? flights.length : 9)" class="flight-card">
@@ -109,5 +128,58 @@
         {{ showAllFlights ? 'Weniger anzeigen' : 'Weitere Flüge anzeigen' }}
       </button>
     </div>
+  </div>
+</div>
+
+<!-- Auto-Modus: Bild und Untertext -->
+<div *ngIf="selectedMode === 'auto'" class="auto-container" style="text-align: center; margin-top: 32px;">
+  <img src="../../../assets/luke-schobert-swXFC8du1hs-unsplash.jpg"
+       alt="Auto" style="max-width: 350px; width: 100%; border-radius: 12px; margin-bottom: 24px;">
+  <h2>Reise mit dem Auto</h2>
+  <p>Plane deine Fahrt individuell und flexibel. <br>Die Strecke von {{origin}} nach {{destination}} beträgt ca. 600 km.</p>
+</div>
+
+<!-- Zug/Bus-Modus: Mockdaten in MatCards -->
+<div *ngIf="selectedMode === 'zug'" class="flight-search-container flight-results" style="margin-top: 32px;">
+  <h2>Verfügbare Zug-/Busverbindungen</h2>
+  <div class="flight-cards">
+    <mat-card *ngFor="let journey of trainJourneys" class="flight-card">
+      <mat-card-header>
+        <div mat-card-avatar class="airline-logo">
+          <mat-icon>train</mat-icon>
+        </div>
+        <mat-card-title>{{ journey.provider }}</mat-card-title>
+        <mat-card-subtitle>
+          <span *ngIf="journey.direct" class="direct-flight">Direktverbindung</span>
+          <span *ngIf="!journey.direct">Umstieg erforderlich</span>
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="flight-info">
+          <div class="flight-time">
+            <div class="departure">
+              <p class="time">{{ formatDate(journey.departure) }}</p>
+              <p class="airport">{{ journey.origin }}</p>
+            </div>
+            <div class="duration">
+              <div class="duration-line"></div>
+              <p>{{ formatDuration(journey.duration) }}</p>
+            </div>
+            <div class="arrival">
+              <p class="time">{{ formatDate(journey.arrival) }}</p>
+              <p class="airport">{{ journey.destination }}</p>
+            </div>
+          </div>
+          <div class="flight-price">
+            <p class="price">{{ journey.price | currency:'EUR' }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button color="primary" disabled>
+          Buchung nicht verfügbar
+        </button>
+      </mat-card-actions>
+    </mat-card>
   </div>
 </div>

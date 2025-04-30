@@ -212,3 +212,30 @@
   margin-top: 24px;
 }
 
+.mode-toggle-container {
+  margin-bottom: 24px;
+}
+.train-results h2 {
+  text-align: center;
+  color: #3f51b5;
+}
+
+
+.auto-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.auto-container img {
+  max-width: 350px;
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  display: block;
+}
+
+
