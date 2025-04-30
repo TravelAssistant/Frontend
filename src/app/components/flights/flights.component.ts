@@ -13,6 +13,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { forkJoin } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import {MatCheckbox} from '@angular/material/checkbox';
+import {MatSlideToggle} from '@angular/material/slide-toggle';
 
 interface Flight {
   id: string;
@@ -25,6 +27,8 @@ interface Flight {
   token: string;
   origin: string;
   destination: string;
+  returnDeparture?: string; // optional, da nicht jeder Flug ein Rückflug ist
+  returnArrival?: string;   // optional, da nicht jeder Flug ein Rückflug ist
 }
 
 
@@ -45,7 +49,9 @@ interface Flight {
     MatInputModule,
     MatNativeDateModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatCheckbox,
+    MatSlideToggle
   ],
   templateUrl: './flights.component.html',
   styleUrl: './flights.component.css',
@@ -56,12 +62,15 @@ export class FlightsComponent implements OnInit{
 
   origin = 'Düsseldorf';
   destination = 'München';
-  departDate = '2025-04-24';
+  departDate = '2025-05-03';
   flights: Flight[] = [];
   selectedFlight: any = null;
   loading = false;
   error = '';
   showAllFlights = false;
+  returnDate = '';
+  isRoundtrip = false;
+
 
 
   constructor(private apiService: FlightApiService){}
@@ -88,7 +97,6 @@ export class FlightsComponent implements OnInit{
     this.selectedFlight = null;
     this.error = '';
 
-    // 1. Flughafencodes für Start und Ziel ermitteln
     forkJoin({
       originCode: this.apiService.getAirportCode(this.origin),
       destCode: this.apiService.getAirportCode(this.destination)
@@ -97,18 +105,19 @@ export class FlightsComponent implements OnInit{
         if (!codes.originCode || !codes.destCode) {
           throw new Error('Flughafencodes konnten nicht ermittelt werden');
         }
-
-        // 2. Flugsuche mit den Flughafencodes und Datum
-        return this.apiService.searchFlights(codes.originCode, codes.destCode, this.departDate);
+        if (this.isRoundtrip && this.returnDate) {
+          return this.apiService.searchRoundtripFlights(codes.originCode, codes.destCode, this.departDate, this.returnDate);
+        } else {
+          return this.apiService.searchFlights(codes.originCode, codes.destCode, this.departDate);
+        }
       })
     ).subscribe({
       next: (response: any) => {
+        // Die Verarbeitung der Flugdaten muss ggf. für Roundtrip angepasst werden
         if (response.data && response.data.itineraries) {
-          // Flugdaten verarbeiten und in unser Format umwandeln
           this.flights = response.data.itineraries.map((itinerary: any) => {
             const leg = itinerary.legs[0];
             const carrier = leg.carriers.marketing[0];
-
             return {
               id: itinerary.id,
               price: itinerary.price.raw,
@@ -119,7 +128,10 @@ export class FlightsComponent implements OnInit{
               direct: leg.stopCount === 0,
               origin: leg.origin.name,
               destination: leg.destination.name,
-              token: response.data.token
+              token: response.data.token,
+              // Bei Roundtrip ggf. weitere Felder für Rückflug ergänzen!
+              returnDeparture: itinerary.legs[1]?.departure,
+              returnArrival: itinerary.legs[1]?.arrival
             };
           });
           this.loading = false;

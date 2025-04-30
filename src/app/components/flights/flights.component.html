@@ -17,11 +17,20 @@
           <mat-label>Abflugdatum (YYYY-MM-DD)</mat-label>
           <input matInput [(ngModel)]="departDate" placeholder="z.B. 2025-04-22">
         </mat-form-field>
+        <mat-form-field>
+          <mat-label>Rückflugdatum</mat-label>
+          <input matInput [(ngModel)]="returnDate" placeholder="z.B. 2025-05-02">
+        </mat-form-field>
+        <mat-slide-toggle [(ngModel)]="isRoundtrip">
+          Hin- und Rückflug
+        </mat-slide-toggle>
+
+
       </div>
     </mat-card-content>
     <mat-card-actions>
       <button mat-raised-button color="primary" (click)="searchFlights()">
-        <mat-icon>search</mat-icon>
+        <mat-icon>search</mat-icon> Suchen
       </button>
     </mat-card-actions>
   </mat-card>
@@ -65,6 +74,24 @@
                 <p class="airport">{{ flight.destination }}</p>
               </div>
             </div>
+            <div *ngIf="isRoundtrip && flight.returnDeparture">
+              <hr>
+              <div class="flight-time">
+                <div class="departure">
+                  <p class="time">{{ formatDate(flight.returnDeparture) }}</p>
+                  <p class="airport">{{ flight.destination }}</p>
+                </div>
+                <div class="duration">
+                  <div class="duration-line"></div>
+                  <p>{{ formatDuration(flight.duration) }}</p>
+                </div>
+                <div class="arrival">
+                  <p class="time">{{ formatDate(flight.returnArrival ?? '')  }}</p>
+                  <p class="airport">{{ flight.origin }}</p>
+                </div>
+              </div>
+            </div>
+
             <div class="flight-price">
               <p class="price">{{ flight.price | currency:'EUR' }}</p>
             </div>

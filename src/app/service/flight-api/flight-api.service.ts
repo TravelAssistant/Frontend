@@ -67,6 +67,16 @@ export class FlightApiService {
     });
   }
 
+  searchRoundtripFlights(fromCode: string, toCode: string, departDate: string, returnDate: string): Observable<any> {
+    return this.http.get(`https://${this.apiUrl}/flights/search-roundtrip?fromEntityId=${fromCode}&toEntityId=${toCode}&departDate=${departDate}&returnDate=${returnDate}&cabinClass=economy`, {
+      headers: {
+        'x-rapidapi-host': this.apiUrl,
+        'x-rapidapi-key': this.apiKey
+      }
+    });
+  }
+
+
 
 
 
