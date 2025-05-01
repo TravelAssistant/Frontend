@@ -79,7 +79,8 @@ export class FlightApiService {
     });
   }
 
-  getFlixbusStopId(query: string): Observable<string> {
+// Gibt die erste city.id zurück
+  getFlixbusCityId(query: string): Observable<string> {
     return this.http.get(`https://${this.apiUrlFlixbus}/autocomplete?query=${encodeURIComponent(query)}&locale=en`, {
       headers: {
         'x-rapidapi-host': this.apiUrlFlixbus,
@@ -87,19 +88,23 @@ export class FlightApiService {
       }
     }).pipe(
       map((response: any) => {
-        // Suche nach dem ersten Ergebnis
         const first = Array.isArray(response) && response.length > 0 ? response[0] : null;
         return first && first.city && first.city.id ? first.city.id : '';
       })
     );
   }
 
-  searchBusTrips(fromId: string, toId: string, date: string): Observable<any> {
-    // Datum von yyyy-mm-dd in dd.mm.yyyy umwandeln
-    const formattedDate = this.formatDateToDDMMYYYY(date);
+// Datum ins richtige Format bringen
+  private formatDateToDDMMYYYY(date: string): string {
+    const [year, month, day] = date.split('-');
+    return `${day}.${month}.${year}`;
+  }
 
+// Sucht Bus-/Zugverbindungen
+  searchBusTrips(fromCityId: string, toCityId: string, date: string): Observable<any> {
+    const formattedDate = this.formatDateToDDMMYYYY(date);
     return this.http.get(
-      `https://${this.apiUrlFlixbus}/trips?from_id=${fromId}&to_id=${toId}&date=${formattedDate}&adult=1&search_by=cities&children=0&bikes=0&currency=EUR&locale=en`,
+      `https://${this.apiUrlFlixbus}/trips?from_id=${fromCityId}&to_id=${toCityId}&date=${formattedDate}&adult=1&search_by=cities&children=0&bikes=0&currency=EUR&locale=de`,
       {
         headers: {
           'x-rapidapi-host': this.apiUrlFlixbus,
@@ -109,12 +114,6 @@ export class FlightApiService {
     );
   }
 
-// Hilfsfunktion zur Umwandlung
-  private formatDateToDDMMYYYY(date: string): string {
-    // Erwartet Eingabe im Format yyyy-mm-dd
-    const [year, month, day] = date.split('-');
-    return `${day}.${month}.${year}`;
-  }
 
 
 

@@ -80,64 +80,7 @@ export class FlightsComponent implements OnInit{
 // Umschalt-Status: 'flug', 'auto', 'zug'
   selectedMode: 'flug' | 'auto' | 'zug' = 'flug';
 
-// Mockdaten für Zug/Bus
-  trainJourneys = [
-    {
-      id: 'T1',
-      provider: 'Deutsche Bahn',
-      departure: '2025-04-24T07:15:00',
-      arrival: '2025-04-24T11:30:00',
-      duration: 255,
-      origin: this.origin,
-      destination: this.destination,
-      price: 69.99,
-      direct: true
-    },
-    {
-      id: 'T2',
-      provider: 'FlixTrain',
-      departure: '2025-04-24T09:45:00',
-      arrival: '2025-04-24T14:10:00',
-      duration: 265,
-      origin: this.origin,
-      destination: this.destination,
-      price: 39.90,
-      direct: false
-    },
-    {
-      id: 'T3',
-      provider: 'FlixTrain',
-      departure: '2025-04-24T09:45:00',
-      arrival: '2025-04-24T14:10:00',
-      duration: 265,
-      origin: this.origin,
-      destination: this.destination,
-      price: 29.90,
-      direct: false
-    },
-    {
-      id: 'T4',
-      provider: 'FlixTrain',
-      departure: '2025-04-24T09:45:00',
-      arrival: '2025-04-24T14:10:00',
-      duration: 265,
-      origin: this.origin,
-      destination: this.destination,
-      price: 59.90,
-      direct: false
-    },
-    {
-      id: 'T5',
-      provider: 'FlixTrain',
-      departure: '2025-04-24T09:45:00',
-      arrival: '2025-04-24T14:10:00',
-      duration: 265,
-      origin: this.origin,
-      destination: this.destination,
-      price: 99.90,
-      direct: true
-    }
-  ];
+  trainJourneys: any[] = [];
 
   constructor(private apiService: FlightApiService){}
 
@@ -155,6 +98,7 @@ export class FlightsComponent implements OnInit{
   ngOnInit() {
     // Automatisch bei Initialisierung laden
     this.searchFlights();
+    this.searchTrain();
   }
 
   searchFlights() {
@@ -249,22 +193,56 @@ export class FlightsComponent implements OnInit{
   }
 
   searchTrain() {
-    // Hier werden Mockdaten für Zug/Bus gesetzt
-    this.flights = []; // Leere ggf. Flugdaten
+    this.loading = true;
     this.error = '';
-    this.trainJourneys = [
-      {
-        id: 'T1',
-        provider: 'Deutsche Bahn',
-        departure: '2025-04-24T07:15:00',
-        arrival: '2025-04-24T11:30:00',
-        duration: 255,
-        origin: this.origin,
-        destination: this.destination,
-        price: 69.99,
-        direct: true
+    this.trainJourneys = [];
+    forkJoin([
+      this.apiService.getFlixbusCityId(this.origin),
+      this.apiService.getFlixbusCityId(this.destination)
+    ]).subscribe({
+      next: ([originCityId, destinationCityId]) => {
+        if (!originCityId || !destinationCityId) {
+          this.error = 'Keine gültigen Städte-IDs gefunden.';
+          this.loading = false;
+          return;
+        }
+        this.apiService.searchBusTrips(originCityId, destinationCityId, this.departDate)
+          .subscribe({
+            next: (result: any) => {
+              // Mapping der API-Response auf das Anzeigeformat
+              this.trainJourneys = (result.journeys || []).map((trip: any, idx: number) => ({
+                id: trip.id || 'F' + idx,
+                provider: trip.segments?.[0]?.product === 'flixbus' ? 'FlixBus' : 'Bus/Zug',
+                departure: trip.dep_offset,
+                arrival: trip.arr_offset,
+                duration: this.getDurationInMinutes(trip.dep_offset, trip.arr_offset),
+                origin: trip.dep_name,
+                destination: trip.arr_name,
+                price: trip.fares?.[0]?.price ?? null,
+                direct: trip.changeovers === 0,
+                deeplink: trip.deeplink // <-- Deeplink übernehmen
+
+              }));
+              this.loading = false;
+            },
+            error: () => {
+              this.error = 'Fehler beim Abrufen der Verbindungen.';
+              this.loading = false;
+            }
+          });
+      },
+      error: () => {
+        this.error = 'Fehler beim Ermitteln der Städte-IDs.';
+        this.loading = false;
       }
-    ];
+    });
+  }
+
+// Hilfsfunktion zur Berechnung der Dauer in Minuten
+  getDurationInMinutes(dep: string, arr: string): number {
+    const depDate = new Date(dep);
+    const arrDate = new Date(arr);
+    return Math.round((arrDate.getTime() - depDate.getTime()) / 60000);
   }
 
 
@@ -303,40 +281,6 @@ export class FlightsComponent implements OnInit{
   }
 
 
-  searchTrips() {
-    this.loading = true;
-    this.error = '';
-    forkJoin([
-      this.apiService.getFlixbusStopId(this.origin),
-      this.apiService.getFlixbusStopId(this.destination)
-    ]).subscribe({
-      next: ([originId, destinationId]) => {
-        if (!originId || !destinationId) {
-          this.error = 'Keine gültigen Stop-IDs gefunden.';
-          this.trips = [];
-          this.loading = false;
-          return;
-        }
-        this.apiService.searchBusTrips(originId, destinationId, this.departDate)
-          .subscribe({
-            next: (result: any) => {
-              this.trips = result.journeys || [];
-              this.loading = false;
-            },
-            error: () => {
-              this.error = 'Fehler beim Abrufen der Verbindungen.';
-              this.trips = [];
-              this.loading = false;
-            }
-          });
-      },
-      error: () => {
-        this.error = 'Fehler beim Ermitteln der Stop-IDs.';
-        this.trips = [];
-        this.loading = false;
-      }
-    });
-  }
 
 
 
