@@ -69,9 +69,6 @@ export class FlightsComponent implements OnInit {
   returnDate = '';
   isRoundtrip = false;
 
-  //für Flixbus
-  trips: any[] = [];
-
 // Umschalt-Status: 'flug', 'auto', 'zug'
   selectedMode: 'flug' | 'auto' | 'zug' = 'flug';
 
