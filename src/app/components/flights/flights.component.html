@@ -1,3 +1,86 @@
-<p>flights works!</p>
+<div class="flight-search-container">
+  <mat-card class="search-card">
+    <mat-card-header>
+      <mat-card-title></mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="search-form">
+        <mat-form-field>
+          <mat-label>Abflugort</mat-label>
+          <input matInput [(ngModel)]="origin">
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Zielort</mat-label>
+          <input matInput [(ngModel)]="destination">
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Abflugdatum (YYYY-MM-DD)</mat-label>
+          <input matInput [(ngModel)]="departDate" placeholder="z.B. 2025-04-22">
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="searchFlights()">
+        <mat-icon>search</mat-icon>
+      </button>
+    </mat-card-actions>
+  </mat-card>
 
-<button mat-raised-button (click)="click()">flight</button>
+  <div *ngIf="loading" class="loading-spinner">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Daten werden geladen...</p>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    <p>{{ error }}</p>
+  </div>
+
+  <div class="flight-results" *ngIf="flights.length > 0 && !loading && !selectedFlight">
+    <h2>Verfügbare Flüge</h2>
+    <div class="flight-cards">
+      <mat-card *ngFor="let flight of flights | slice:0:(showAllFlights ? flights.length : 9)" class="flight-card">
+        <mat-card-header>
+          <div mat-card-avatar class="airline-logo">
+            <mat-icon>flight</mat-icon>
+          </div>
+          <mat-card-title>{{ flight.airline }}</mat-card-title>
+          <mat-card-subtitle>
+            <span *ngIf="flight.direct" class="direct-flight">Direktflug</span>
+            <span *ngIf="!flight.direct">Mit Zwischenstopp</span>
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="flight-info">
+            <div class="flight-time">
+              <div class="departure">
+                <p class="time">{{ formatDate(flight.departure) }}</p>
+                <p class="airport">{{ flight.origin }}</p>
+              </div>
+              <div class="duration">
+                <div class="duration-line"></div>
+                <p>{{ formatDuration(flight.duration) }}</p>
+              </div>
+              <div class="arrival">
+                <p class="time">{{ formatDate(flight.arrival) }}</p>
+                <p class="airport">{{ flight.destination }}</p>
+              </div>
+            </div>
+            <div class="flight-price">
+              <p class="price">{{ flight.price | currency:'EUR' }}</p>
+            </div>
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-button color="primary" (click)="getFlightDetails(flight)">
+            Flug buchen <mat-icon>shopping_cart</mat-icon>
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+    <div class="show-more-container" *ngIf="flights.length > 9">
+      <button mat-stroked-button color="primary" (click)="showAllFlights = !showAllFlights">
+        {{ showAllFlights ? 'Weniger anzeigen' : 'Weitere Flüge anzeigen' }}
+      </button>
+    </div>
+  </div>
+</div>
