@@ -1,13 +1,16 @@
 <div class="mode-toggle-container" style="display: flex; justify-content: center; margin-bottom: 24px;">
-  <mat-button-toggle-group [(ngModel)]="selectedMode"  exclusive>
+  <mat-button-toggle-group [(ngModel)]="selectedMode" exclusive>
     <mat-button-toggle value="flug">
-      <mat-icon>flight</mat-icon> Flug
+      <mat-icon>flight</mat-icon>
+      Flug
     </mat-button-toggle>
     <mat-button-toggle value="auto">
-      <mat-icon>directions_car</mat-icon> Auto
+      <mat-icon>directions_car</mat-icon>
+      Auto
     </mat-button-toggle>
     <mat-button-toggle value="zug">
-      <mat-icon>train</mat-icon> Zug/Bus
+      <mat-icon>train</mat-icon>
+      Zug/Bus
     </mat-button-toggle>
   </mat-button-toggle-group>
 </div>
@@ -43,7 +46,8 @@
     </mat-card-content>
     <mat-card-actions>
       <button mat-raised-button color="primary" (click)="onSearch()">
-        <mat-icon>search</mat-icon> Suchen
+        <mat-icon>search</mat-icon>
+        Suchen
       </button>
     </mat-card-actions>
   </mat-card>
@@ -57,7 +61,6 @@
     <p>{{ error }}</p>
   </div>
 </div>
-
 
 
 <!-- Flug-Modus: Suchformular & Flüge -->
@@ -105,7 +108,7 @@
                   <p>{{ formatDuration(flight.duration) }}</p>
                 </div>
                 <div class="arrival">
-                  <p class="time">{{ formatDate(flight.returnArrival ?? '')  }}</p>
+                  <p class="time">{{ formatDate(flight.returnArrival ?? '') }}</p>
                   <p class="airport">{{ flight.origin }}</p>
                 </div>
               </div>
@@ -118,7 +121,8 @@
         </mat-card-content>
         <mat-card-actions>
           <button mat-button color="primary" (click)="getFlightDetails(flight)">
-            Flug buchen <mat-icon>shopping_cart</mat-icon>
+            Flug buchen
+            <mat-icon>shopping_cart</mat-icon>
           </button>
         </mat-card-actions>
       </mat-card>
@@ -136,56 +140,87 @@
   <img src="../../../assets/luke-schobert-swXFC8du1hs-unsplash.jpg"
        alt="Auto" style="max-width: 350px; width: 100%; border-radius: 12px; margin-bottom: 24px;">
   <h2>Reise mit dem Auto</h2>
-  <p>Plane deine Fahrt individuell und flexibel. <br>Die Strecke von {{origin}} nach {{destination}} beträgt ca. 600 km.</p>
+  <p>Plane deine Fahrt individuell und flexibel. <br>Die Strecke von {{ origin }} nach {{ destination }} beträgt ca. 600
+    km.</p>
 </div>
 
-<!-- Zug/Bus-Modus: Flixbus-API-Daten in MatCards -->
+<!-- Zug/Bus-Modus: Flixbus-API-Daten in MatCards mit Hin- und Rückfahrt -->
 <div *ngIf="selectedMode === 'zug'" class="flight-search-container flight-results" style="margin-top: 32px;">
   <h2>Verfügbare Zug-/Busverbindungen</h2>
   <div class="flight-cards">
-    <mat-card *ngFor="let journey of trainJourneys" class="flight-card">
+    <mat-card *ngFor="let pair of trainJourneys" class="flight-card">
       <mat-card-header>
         <div mat-card-avatar class="airline-logo">
           <mat-icon>train</mat-icon>
         </div>
-        <mat-card-title>{{ journey.provider }}</mat-card-title>
+        <mat-card-title>FlixBus</mat-card-title>
         <mat-card-subtitle>
-          <span *ngIf="journey.direct" class="direct-flight">Direktverbindung</span>
-          <span *ngIf="!journey.direct">Umstieg erforderlich</span>
+          <span *ngIf="pair.outbound?.direct" class="direct-flight">Direktverbindung</span>
+          <span *ngIf="!pair.outbound?.direct">Umstieg erforderlich</span>
         </mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <div class="flight-info">
+          <!-- Hinfahrt -->
           <div class="flight-time">
             <div class="departure">
-              <p class="time">{{ formatDate(journey.departure) }}</p>
-              <p class="airport">{{ journey.origin }}</p>
+              <p class="time">{{ formatDate(pair.outbound?.departure) }}</p>
+              <p class="airport">{{ pair.outbound?.origin }}</p>
             </div>
             <div class="duration">
               <div class="duration-line"></div>
-              <p>{{ formatDuration(journey.duration) }}</p>
+              <p>{{ formatDuration(pair.outbound?.duration) }}</p>
             </div>
             <div class="arrival">
-              <p class="time">{{ formatDate(journey.arrival) }}</p>
-              <p class="airport">{{ journey.destination }}</p>
+              <p class="time">{{ formatDate(pair.outbound?.arrival) }}</p>
+              <p class="airport">{{ pair.outbound?.destination }}</p>
+            </div>
+          </div>
+          <!-- Rückfahrt (falls vorhanden) -->
+          <div *ngIf="isRoundtrip && pair.inbound" style="margin-top: 16px;">
+            <hr>
+            <div class="flight-time">
+              <div class="departure">
+                <p class="time">{{ formatDate(pair.inbound?.departure) }}</p>
+                <p class="airport">{{ pair.inbound?.origin }}</p>
+              </div>
+              <div class="duration">
+                <div class="duration-line"></div>
+                <p>{{ formatDuration(pair.inbound?.duration) }}</p>
+              </div>
+              <div class="arrival">
+                <p class="time">{{ formatDate(pair.inbound?.arrival) }}</p>
+                <p class="airport">{{ pair.inbound?.destination }}</p>
+              </div>
             </div>
           </div>
           <div class="flight-price">
-            <p class="price">{{ journey.price | currency:'EUR' }}</p>
+            <p class="price">
+              {{ pair.outbound?.price | currency:pair.outbound?.currency }}
+              <span
+                *ngIf="isRoundtrip && pair.inbound && pair.inbound.price">+ {{ pair.inbound.price | currency:pair.inbound.currency }}</span>
+            </p>
           </div>
         </div>
       </mat-card-content>
       <mat-card-actions>
-        <a mat-button color="primary" [href]="journey.deeplink" target="_blank" *ngIf="journey.price">
-          Verbindung buchen <mat-icon>shopping_cart</mat-icon>
+        <a mat-button color="primary" [href]="pair.outbound?.deeplink" target="_blank" *ngIf="pair.outbound?.deeplink">
+          Hinfahrt buchen
+          <mat-icon>shopping_cart</mat-icon>
         </a>
-        <button mat-button color="primary" disabled *ngIf="!journey.price">
+        <a mat-button color="accent" [href]="pair.inbound?.deeplink" target="_blank"
+           *ngIf="isRoundtrip && pair.inbound?.deeplink">
+          Rückfahrt buchen
+          <mat-icon>shopping_cart</mat-icon>
+        </a>
+        <button mat-button color="primary" disabled *ngIf="!pair.outbound?.deeplink">
           Buchung nicht verfügbar
         </button>
       </mat-card-actions>
     </mat-card>
   </div>
 </div>
+
 
 
 

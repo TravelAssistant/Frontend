@@ -215,6 +215,7 @@
 .mode-toggle-container {
   margin-bottom: 24px;
 }
+
 .train-results h2 {
   text-align: center;
   color: #3f51b5;
@@ -234,7 +235,7 @@
   width: 100%;
   border-radius: 12px;
   margin-bottom: 24px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
   display: block;
 }
 

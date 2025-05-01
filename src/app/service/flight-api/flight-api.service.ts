@@ -1,19 +1,20 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {environment} from '../../../environments/environment';
 import {HttpClient} from '@angular/common/http';
-import {Observable, map} from 'rxjs';
+import {map, Observable} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FlightApiService {
-  private apiUrl= environment.flightApi.url;
+  private apiUrl = environment.flightApi.url;
   private apiKey = environment.flightApi.key;
 
   private apiUrlFlixbus = environment.flixbusApi.url;
-  private apiKeyFlixbus= environment.flixbusApi.key;
+  private apiKeyFlixbus = environment.flixbusApi.key;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+  }
 
   getAllFlights(from: string, to: string): Observable<any> {
     return this.http.get(`https://${this.apiUrl}/flights/search-one-way?fromEntityId=${from}&toEntityId=${to}&cabinClass=economy`, {
@@ -44,7 +45,9 @@ export class FlightApiService {
     }).pipe(
       map((response: any) => {
         // Suche nach dem ersten Ergebnis mit entityType AIRPORT
-        const airport = response.data.find((item: { navigation: { entityType: string; }; }) => item.navigation.entityType === 'AIRPORT');
+        const airport = response.data.find((item: {
+          navigation: { entityType: string; };
+        }) => item.navigation.entityType === 'AIRPORT');
         return airport ? airport.navigation.relevantFlightParams.skyId : '';
       })
     );
@@ -113,10 +116,6 @@ export class FlightApiService {
       }
     );
   }
-
-
-
-
 
 
 }

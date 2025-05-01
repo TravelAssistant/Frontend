@@ -1,19 +1,18 @@
-import { Component, OnInit } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
-import { FlightApiService } from '../../service/flight-api/flight-api.service';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatNativeDateModule } from '@angular/material/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { forkJoin } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
-import {MatCheckbox} from '@angular/material/checkbox';
+import {Component, OnInit} from '@angular/core';
+import {HttpClientModule} from '@angular/common/http';
+import {FlightApiService} from '../../service/flight-api/flight-api.service';
+import {MatButtonModule} from '@angular/material/button';
+import {MatCardModule} from '@angular/material/card';
+import {MatIconModule} from '@angular/material/icon';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {MatDatepickerModule} from '@angular/material/datepicker';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import {MatNativeDateModule} from '@angular/material/core';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {CommonModule} from '@angular/common';
+import {forkJoin} from 'rxjs';
+import {switchMap} from 'rxjs/operators';
 import {MatSlideToggle} from '@angular/material/slide-toggle';
 import {MatButtonToggle, MatButtonToggleGroup} from '@angular/material/button-toggle';
 
@@ -33,9 +32,6 @@ interface Flight {
 }
 
 
-
-
-
 @Component({
   selector: 'app-flights',
   imports: [
@@ -51,7 +47,6 @@ interface Flight {
     MatNativeDateModule,
     FormsModule,
     ReactiveFormsModule,
-    MatCheckbox,
     MatSlideToggle,
     MatButtonToggle,
     MatButtonToggleGroup
@@ -61,7 +56,7 @@ interface Flight {
   standalone: true,
   providers: [FlightApiService]
 })
-export class FlightsComponent implements OnInit{
+export class FlightsComponent implements OnInit {
 
   origin = 'Düsseldorf';
   destination = 'München';
@@ -82,7 +77,8 @@ export class FlightsComponent implements OnInit{
 
   trainJourneys: any[] = [];
 
-  constructor(private apiService: FlightApiService){}
+  constructor(private apiService: FlightApiService) {
+  }
 
   click() {
     this.apiService.getAllFlights('PARI', 'MSYA').subscribe(
@@ -196,6 +192,8 @@ export class FlightsComponent implements OnInit{
     this.loading = true;
     this.error = '';
     this.trainJourneys = [];
+
+    // Zuerst die City-IDs für beide Richtungen holen
     forkJoin([
       this.apiService.getFlixbusCityId(this.origin),
       this.apiService.getFlixbusCityId(this.destination)
@@ -206,30 +204,70 @@ export class FlightsComponent implements OnInit{
           this.loading = false;
           return;
         }
-        this.apiService.searchBusTrips(originCityId, destinationCityId, this.departDate)
-          .subscribe({
-            next: (result: any) => {
-              // Mapping der API-Response auf das Anzeigeformat
-              this.trainJourneys = (result.journeys || []).map((trip: any, idx: number) => ({
-                id: trip.id || 'F' + idx,
-                provider: trip.segments?.[0]?.product === 'flixbus' ? 'FlixBus' : 'Bus/Zug',
-                departure: trip.dep_offset,
-                arrival: trip.arr_offset,
-                duration: this.getDurationInMinutes(trip.dep_offset, trip.arr_offset),
-                origin: trip.dep_name,
-                destination: trip.arr_name,
-                price: trip.fares?.[0]?.price ?? null,
-                direct: trip.changeovers === 0,
-                deeplink: trip.deeplink // <-- Deeplink übernehmen
 
-              }));
+        // Hilfsfunktion für das Mapping
+        const mapTrips = (result: any, reverse = false) =>
+          (result.journeys || []).map((trip: any, idx: number) => ({
+            id: trip.id || 'F' + idx + (reverse ? '_r' : ''),
+            provider: trip.segments?.[0]?.product === 'flixbus' ? 'FlixBus' : 'Bus/Zug',
+            departure: trip.dep_offset,
+            arrival: trip.arr_offset,
+            duration: this.getDurationInMinutes(trip.dep_offset, trip.arr_offset),
+            origin: trip.dep_name,
+            destination: trip.arr_name,
+            price: trip.fares?.[0]?.price ?? null,
+            currency: trip.fares?.[0]?.currency ?? 'EUR',
+            direct: trip.changeovers === 0,
+            deeplink: trip.deeplink,
+            isReturn: reverse
+          }));
+
+        // Nur Hin- oder Hin- und Rückfahrt?
+        if (this.isRoundtrip && this.returnDate) {
+          // Hole beide Richtungen parallel
+          forkJoin([
+            this.apiService.searchBusTrips(originCityId, destinationCityId, this.departDate),
+            this.apiService.searchBusTrips(destinationCityId, originCityId, this.returnDate)
+          ]).subscribe({
+            next: ([outbound, inbound]) => {
+              // Kombiniere Hin- und Rückfahrten paarweise (jeweils erste Hinfahrt mit erster Rückfahrt usw.)
+              const journeys: any[] = [];
+              const outTrips = mapTrips(outbound, false);
+              const inTrips = mapTrips(inbound, true);
+
+              // Du kannst auch alle Kombinationen bilden, hier werden sie paarweise kombiniert:
+              const len = Math.max(outTrips.length, inTrips.length);
+              for (let i = 0; i < len; i++) {
+                journeys.push({
+                  outbound: outTrips[i] || null,
+                  inbound: inTrips[i] || null
+                });
+              }
+              this.trainJourneys = journeys;
               this.loading = false;
             },
             error: () => {
-              this.error = 'Fehler beim Abrufen der Verbindungen.';
+              this.error = 'Fehler beim Abrufen der Hin- oder Rückfahrt.';
               this.loading = false;
             }
           });
+        } else {
+          // Nur Hinfahrt
+          this.apiService.searchBusTrips(originCityId, destinationCityId, this.departDate)
+            .subscribe({
+              next: (result: any) => {
+                this.trainJourneys = mapTrips(result, false).map((journey: any) => ({
+                  outbound: journey,
+                  inbound: null
+                }));
+                this.loading = false;
+              },
+              error: () => {
+                this.error = 'Fehler beim Abrufen der Verbindungen.';
+                this.loading = false;
+              }
+            });
+        }
       },
       error: () => {
         this.error = 'Fehler beim Ermitteln der Städte-IDs.';
@@ -263,8 +301,6 @@ export class FlightsComponent implements OnInit{
   }
 
 
-
-
   formatDuration(minutes: number): string {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -273,18 +309,12 @@ export class FlightsComponent implements OnInit{
 
   formatDate(dateString: string): string {
     const date = new Date(dateString);
-    return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'});
   }
 
   get visibleFlights() {
     return this.showAllFlights ? this.flights : this.flights.slice(0, 9);
   }
-
-
-
-
-
-
 
 
 }
