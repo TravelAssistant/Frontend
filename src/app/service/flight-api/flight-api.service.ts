@@ -10,6 +10,9 @@ export class FlightApiService {
   private apiUrl= environment.flightApi.url;
   private apiKey = environment.flightApi.key;
 
+  private apiUrlFlixbus = environment.flixbusApi.url;
+  private apiKeyFlixbus= environment.flixbusApi.key;
+
   constructor(private http: HttpClient) { }
 
   getAllFlights(from: string, to: string): Observable<any> {
@@ -76,6 +79,42 @@ export class FlightApiService {
     });
   }
 
+  getFlixbusStopId(query: string): Observable<string> {
+    return this.http.get(`https://${this.apiUrlFlixbus}/autocomplete?query=${encodeURIComponent(query)}&locale=en`, {
+      headers: {
+        'x-rapidapi-host': this.apiUrlFlixbus,
+        'x-rapidapi-key': this.apiKeyFlixbus
+      }
+    }).pipe(
+      map((response: any) => {
+        // Suche nach dem ersten Ergebnis
+        const first = Array.isArray(response) && response.length > 0 ? response[0] : null;
+        return first && first.city && first.city.id ? first.city.id : '';
+      })
+    );
+  }
+
+  searchBusTrips(fromId: string, toId: string, date: string): Observable<any> {
+    // Datum von yyyy-mm-dd in dd.mm.yyyy umwandeln
+    const formattedDate = this.formatDateToDDMMYYYY(date);
+
+    return this.http.get(
+      `https://${this.apiUrlFlixbus}/trips?from_id=${fromId}&to_id=${toId}&date=${formattedDate}&adult=1&search_by=cities&children=0&bikes=0&currency=EUR&locale=en`,
+      {
+        headers: {
+          'x-rapidapi-host': this.apiUrlFlixbus,
+          'x-rapidapi-key': this.apiKeyFlixbus
+        }
+      }
+    );
+  }
+
+// Hilfsfunktion zur Umwandlung
+  private formatDateToDDMMYYYY(date: string): string {
+    // Erwartet Eingabe im Format yyyy-mm-dd
+    const [year, month, day] = date.split('-');
+    return `${day}.${month}.${year}`;
+  }
 
 
 

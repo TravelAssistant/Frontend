@@ -65,7 +65,7 @@ export class FlightsComponent implements OnInit{
 
   origin = 'Düsseldorf';
   destination = 'München';
-  departDate = '2025-05-03';
+  departDate = '2025-05-07';
   flights: Flight[] = [];
   selectedFlight: any = null;
   loading = false;
@@ -73,6 +73,9 @@ export class FlightsComponent implements OnInit{
   showAllFlights = false;
   returnDate = '';
   isRoundtrip = false;
+
+  //für Flixbus
+  trips: any[] = [];
 
 // Umschalt-Status: 'flug', 'auto', 'zug'
   selectedMode: 'flug' | 'auto' | 'zug' = 'flug';
@@ -298,6 +301,46 @@ export class FlightsComponent implements OnInit{
   get visibleFlights() {
     return this.showAllFlights ? this.flights : this.flights.slice(0, 9);
   }
+
+
+  searchTrips() {
+    this.loading = true;
+    this.error = '';
+    forkJoin([
+      this.apiService.getFlixbusStopId(this.origin),
+      this.apiService.getFlixbusStopId(this.destination)
+    ]).subscribe({
+      next: ([originId, destinationId]) => {
+        if (!originId || !destinationId) {
+          this.error = 'Keine gültigen Stop-IDs gefunden.';
+          this.trips = [];
+          this.loading = false;
+          return;
+        }
+        this.apiService.searchBusTrips(originId, destinationId, this.departDate)
+          .subscribe({
+            next: (result: any) => {
+              this.trips = result.journeys || [];
+              this.loading = false;
+            },
+            error: () => {
+              this.error = 'Fehler beim Abrufen der Verbindungen.';
+              this.trips = [];
+              this.loading = false;
+            }
+          });
+      },
+      error: () => {
+        this.error = 'Fehler beim Ermitteln der Stop-IDs.';
+        this.trips = [];
+        this.loading = false;
+      }
+    });
+  }
+
+
+
+
 
 
 }

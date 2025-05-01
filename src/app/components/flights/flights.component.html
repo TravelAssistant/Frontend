@@ -183,3 +183,30 @@
     </mat-card>
   </div>
 </div>
+
+<div *ngIf="loading">Lade Verbindungen...</div>
+<div *ngIf="error">{{ error }}</div>
+
+<div *ngIf="!loading && !error && trips.length > 0">
+  <h2>Verbindungen von {{origin}} nach {{destination}} am {{departDate}}</h2>
+  <ul>
+    <li *ngFor="let trip of trips">
+      Abfahrt: {{trip.dep_offset | date:'short'}} –
+      Ankunft: {{trip.arr_offset | date:'short'}} –
+      Dauer: {{trip.duration}} –
+      Preis: {{trip.fares[0]?.price}} {{trip.fares[0]?.currency}}
+      <a [href]="trip.deeplink" target="_blank">Buchen</a>
+    </li>
+  </ul>
+</div>
+<div *ngIf="!loading && !error && trips.length === 0">
+  <p>Keine Verbindungen gefunden.</p>
+</div>
+
+
+<button mat-button color="primary" (click)="searchTrips()">
+  Suche Flixbus
+</button>
+
+
+
