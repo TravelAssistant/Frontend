@@ -6,6 +6,10 @@ export const environment = {
     url: '',
     key: '',
   },
+  flixbusApi: {
+    url: '',
+    key: '',
+  },
   auth0: {
     domain: '',
     clientId: '',
