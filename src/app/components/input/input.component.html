@@ -1,0 +1,53 @@
+<div class="flex flex-col w-full">
+  <div class="flex flex-col md:flex-row md:space-x-4 w-full">
+    <div class="flex flex-col w-full md:w-1/2">
+      <label for="start-location" class="text-gray-600 font-medium">Start:</label>
+      <input id="start-location" type="text" placeholder="Start location" [(ngModel)]="startLocation"
+             (ngModelChange)="onStartLocationChange($event)"
+             class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
+    </div>
+
+    <div class="flex flex-col w-full md:w-1/2">
+      <label for="end-location" class="text-gray-600 font-medium">Ziel:</label>
+      <input id="end-location" type="text" placeholder="Destination" [(ngModel)]="endLocation"
+             (ngModelChange)="onEndLocationChange($event)"
+             class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
+    </div>
+  </div>
+
+  <div class="flex flex-col md:flex-row md:space-x-4 w-full mt-4">
+    <div class="flex flex-col w-full md:w-1/3">
+      <div class="flex items-center space-x-2">
+        <mat-button-toggle-group [(ngModel)]="tripType" aria-label="Reisetyp">
+          <mat-button-toggle value="oneway">Einfache Fahrt</mat-button-toggle>
+          <mat-button-toggle value="roundtrip">Hin- und Rückfahrt</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+    </div>
+
+    <div class="flex flex-col md:flex-row md:space-x-4 w-full md:w-2/3 mt-2 md:mt-0">
+      <div class="flex flex-col w-full md:w-1/2">
+        <label for="departure-date" class="text-gray-600 font-medium">Hinreise:</label>
+        <input id="departure-date" type="date" [(ngModel)]="travelDate"
+               (ngModelChange)="onTravelDateChange($event)"
+               class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm bg-gray-100">
+      </div>
+
+      @if (tripType === 'roundtrip') {
+        <div class="flex flex-col w-full md:w-1/2 mt-2 md:mt-0">
+          <label for="return-date" class="text-gray-600 font-medium">Rückreise:</label>
+          <input id="return-date" type="date" [(ngModel)]="returnDate"
+                 (ngModelChange)="onReturnDateChange($event)"
+                 class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm bg-gray-100">
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="flex justify-end mt-6">
+    <button (click)="search()"
+            class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition-transform transform hover:scale-105">
+      Route suchen
+    </button>
+  </div>
+</div>

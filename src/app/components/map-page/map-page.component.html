@@ -1,60 +1,82 @@
-<div class="flex flex-col items-center space-y-6 p-6 bg-white rounded-2xl shadow-lg max-w-lg mx-auto">
-    <div class="flex flex-col md:flex-row md:space-x-4 w-full">
-        <div class="flex flex-col w-full md:w-1/2">
-            <label for="start-location" class="text-gray-600 font-medium">Start:</label>
-            <input id="start-location" type="text" placeholder="Start location" [(ngModel)]="startLocationInput"
-                   class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
-        </div>
+<div class="container mx-auto px-4 py-6">
+  <app-location-input
+    [startLocation]="startLocationInput"
+    [endLocation]="endLocationInput"
+    [travelDate]="travelDate"
+    (startLocationChange)="onStartLocationChange($event)"
+    (endLocationChange)="onEndLocationChange($event)"
+    (travelDateChange)="onTravelDateChange($event)"
+    (searchLocations)="calculateRoute()"
+  ></app-location-input>
 
-        <div class="flex flex-col w-full md:w-1/2">
-            <label for="end-location" class="text-gray-600 font-medium">Destination:</label>
-            <input id="end-location" type="text" placeholder="Destination" [(ngModel)]="endLocationInput"
-                   class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
-        </div>
-    </div>
+  <div class="mt-6 flex flex-wrap justify-center gap-4">
+    <button
+      (click)="transportMode = 'driving'; loadRoute()"
+      class="px-4 py-2 rounded-lg"
+      [class.bg-blue-500]="transportMode === 'driving'"
+      [class.text-white]="transportMode === 'driving'"
+      [class.bg-gray-200]="transportMode !== 'driving'">
+      Auto
+    </button>
+    <button
+      (click)="transportMode = 'train'; loadRoute()"
+      class="px-4 py-2 rounded-lg"
+      [class.bg-green-500]="transportMode === 'train'"
+      [class.text-white]="transportMode === 'train'"
+      [class.bg-gray-200]="transportMode !== 'train'">
+      Zug
+    </button>
+    <button
+      (click)="transportMode = 'flight'; loadRoute()"
+      class="px-4 py-2 rounded-lg"
+      [class.bg-red-500]="transportMode === 'flight'"
+      [class.text-white]="transportMode === 'flight'"
+      [class.bg-gray-200]="transportMode !== 'flight'">
+      Flugzeug
+    </button>
+    <button
+      (click)="transportMode = 'driving-flight'; loadRoute()"
+      class="px-4 py-2 rounded-lg"
+      [class.bg-purple-500]="transportMode === 'driving-flight'"
+      [class.text-white]="transportMode === 'driving-flight'"
+      [class.bg-gray-200]="transportMode !== 'driving-flight'">
+      Auto + Flugzeug
+    </button>
+  </div>
 
-    <div class="flex space-x-4 w-full justify-between items-center">
-        <button (click)="searchLocations()"
-                class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition-transform transform hover:scale-105">
-            Search Route
-        </button>
+  <div class="relative mt-6">
+    <app-map [startLatLng]="startLatLng"
+             [endLatLng]="endLatLng"
+             [transportMode]="transportMode"
+             [startLocationName]="startLocationInput"
+             [endLocationName]="endLocationInput"
+             (routeCalculated)="onRouteCalculated($event)"
+             class="w-full">
+    </app-map>
 
-        <select [(ngModel)]="transportMode"  (change)="onTransportChange($event)"
-                class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm bg-gray-100">
-            <option value="driving">Auto</option>
-            <option value="flight">Flugzeug</option>
-            <option value="train">Zug</option>
-            <option value="driving-flight">Auto-Flug</option>
-        </select>
-      @if (transportMode === 'driving') {
-        <select [(ngModel)]="vehicleType" (change)="onVehicleTypeChange($event)"
-                class="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm bg-gray-100">
-            <option value="petrol">Benzin</option>
-            <option value="diesel">Diesel</option>
-            <option value="electric">Elektro</option>
-        </select>
-      }
-    </div>
-</div>
-
-<div id="map" class="mt-6 w-full h-[500px] rounded-2xl shadow-lg border"></div>
-
-<!-- Zusätzliche Infos unter der Karte -->
-<div class="flex flex-col md:flex-row justify-between items-center mt-6 w-full max-w-lg mx-auto space-y-4 md:space-y-0 md:space-x-4">
-    <div class="p-4 bg-gray-100 rounded-xl shadow-md w-full text-center">
-        <h3 class="text-gray-700 font-semibold">Strecke</h3>
-        <p class="text-lg font-bold">{{ distance }} km</p>
-    </div>
-    <div class="p-4 bg-gray-100 rounded-xl shadow-md w-full text-center">
-        <h3 class="text-gray-700 font-semibold">CO₂ Emissionen</h3>
-        <p class="text-lg font-bold">{{ co2Emissions }} kg</p>
-    </div>
-    <div class="p-4 bg-gray-100 rounded-xl shadow-md w-full text-center" (click)="openDeepLink()">
-        <h3 class="text-gray-700 font-semibold">Kosten</h3>
-        <p class="text-lg font-bold">{{ cost }} €</p>
-    </div>
-</div>
-
-@if (progressSpinner) {
+    @if (progressSpinner) {
+      <div class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
         <mat-spinner diameter="50"></mat-spinner>
-}
+      </div>
+    }
+  </div>
+
+  <!-- Zusätzliche Infos unter der Karte -->
+  <div class="flex flex-col md:flex-row justify-between items-center mt-6 w-full max-w-lg mx-auto space-y-4 md:space-y-0 md:space-x-4">
+    <div class="p-4 bg-gray-100 rounded-xl shadow-md w-full text-center">
+      <h3 class="text-gray-700 font-semibold">Strecke</h3>
+      <p class="text-lg font-bold">{{ distance }} km</p>
+    </div>
+    <div class="p-4 bg-gray-100 rounded-xl shadow-md w-full text-center"
+         [class.bg-green-100]="co2Emissions < 50"
+         [class.bg-yellow-100]="co2Emissions >= 50 && co2Emissions < 100"
+         [class.bg-red-100]="co2Emissions >= 100">
+      <h3 class="text-gray-700 font-semibold">CO₂ Emissionen</h3>
+      <p class="text-lg font-bold">{{ co2Emissions }} kg</p>
+    </div>
+    <div class="p-4 bg-gray-100 rounded-xl shadow-md w-full text-center">
+      <h3 class="text-gray-700 font-semibold">Kosten</h3>
+      <p class="text-lg font-bold">{{ cost }} €</p>
+    </div>
+  </div>
+</div>

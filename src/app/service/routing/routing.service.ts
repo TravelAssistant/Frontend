@@ -1,4 +1,3 @@
-// src/app/services/route.service.ts
 import { Injectable, signal } from '@angular/core';
 
 export interface RouteData {
