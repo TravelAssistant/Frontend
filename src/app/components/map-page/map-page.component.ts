@@ -7,11 +7,13 @@ import {catchError, forkJoin, of, tap} from "rxjs";
 import {MapComponent} from "../map/map.component";
 import {InputComponent} from '../input/input.component';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {CompareComponent} from '../compare/compare.component';
+import {TransportMetrics} from "../compare/compare.component";
 
 @Component({
   selector: 'app-map-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, MapComponent, MatProgressSpinnerModule, InputComponent],
+  imports: [CommonModule, FormsModule, MapComponent, MatProgressSpinnerModule, InputComponent, CompareComponent],
   templateUrl: './map-page.component.html',
   styleUrl: './map-page.component.css'
 })
@@ -30,26 +32,15 @@ export class MapPageComponent implements OnInit {
   cost: number = 0;
   currentTransportMode: string = 'driving';
 
+  transportMetrics: TransportMetrics[] = [];
+
   constructor(
     private routingService: RoutingService,
     private httpService: HttpService
   ) {
   }
 
-  ngOnInit(): void {
-    // Get route data from service using signal
-    const routeData = this.routingService.routeData();
-
-    if (routeData) {
-      // Process start location
-      this.processLocationInput('start', routeData.startLocation);
-      // Process end location
-      this.processLocationInput('end', routeData.endLocation);
-
-      // Map transport mode from selection component to internal representation
-      this.mapTransportMode(routeData.transportMode || 'driving');
-    }
-  }
+  ngOnInit(): void {}
 
   private processLocationInput(type: 'start' | 'end', location: any): void {
     if (!location) return;
@@ -118,6 +109,8 @@ export class MapPageComponent implements OnInit {
   calculateRoute() {
     this.progressSpinner = true;
 
+    this.transportMetrics = [];
+
     forkJoin([
       this.httpService.geocode(this.startLocationInput).pipe(
         tap(result => console.log('Start-Ergebnis:', result)),
@@ -159,8 +152,25 @@ export class MapPageComponent implements OnInit {
     });
   }
 
-  onRouteCalculated(event: { distance: number; co2Emissions: number; cost: number; transportMode: string }) {
-    // Aktualisiere nur die Werte, wenn der aktuelle Transportmodus übereinstimmt
+  onRouteCalculated(event: { distance: number; co2Emissions: number; cost: number; transportMode: string; duration?: number }) {
+    // Metrik zum Array hinzufügen oder aktualisieren
+    const existingMetricIndex = this.transportMetrics.findIndex(metric => metric.mode === event.transportMode);
+
+    const newMetric: TransportMetrics = {
+      mode: event.transportMode,
+      distance: event.distance,
+      co2Emissions: event.co2Emissions,
+      cost: event.cost,
+      duration: event.duration
+    };
+
+    if (existingMetricIndex >= 0) {
+      this.transportMetrics[existingMetricIndex] = newMetric;
+    } else {
+      this.transportMetrics.push(newMetric);
+    }
+
+    // Aktualisiere die aktuellen Werte, wenn der aktuelle Transportmodus übereinstimmt
     if (event.transportMode === this.transportMode) {
       this.distance = event.distance;
       this.co2Emissions = event.co2Emissions;
