@@ -77,16 +77,7 @@ export class FlightsComponent implements OnInit {
   constructor(private apiService: FlightApiService) {
   }
 
-  click() {
-    this.apiService.getAllFlights('PARI', 'MSYA').subscribe(
-      data => {
-        console.log(data);
-      },
-      error => {
-        console.error(error);
-      }
-    );
-  }
+
 
   ngOnInit() {
     // Automatisch bei Initialisierung laden
