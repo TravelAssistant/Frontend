@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
+import {AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
 import * as L from 'leaflet';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
@@ -18,7 +18,7 @@ import {catchError, forkJoin, map, Observable, of, switchMap} from "rxjs";
   templateUrl: './map.component.html',
   styleUrl: './map.component.css'
 })
-export class MapComponent implements OnInit, AfterViewInit, OnChanges {
+export class MapComponent implements AfterViewInit, OnChanges {
   @Input() startLatLng: L.LatLngTuple = [48.137154, 11.576124]; // München default
   @Input() endLatLng: L.LatLngTuple = [52.520008, 13.404954]; // Berlin default
   @Input() transportMode: string = 'driving';
@@ -66,10 +66,6 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
   constructor(
     private httpService: HttpService
   ) {
-  }
-
-  ngOnInit(): void {
-    // Initialisierungslogik
   }
 
   ngAfterViewInit(): void {
@@ -193,35 +189,6 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
       iconUrl,
       shadowUrl
     });
-  }
-
-  loadRoute() {
-    if (!this.isValidLatLng(this.startLatLng) || !this.isValidLatLng(this.endLatLng)) {
-      console.log('Invalid coordinates, not loading route');
-      return;
-    }
-
-    // Wenn eine Sequenz läuft, unterbrechen wir diese und zeigen nur den ausgewählten Modus
-    if (this.isSequenceRunning) {
-      this.isSequenceRunning = false;
-    }
-
-    this.hideAllRouteLayers();
-    this.routeLayer = this.routeLayers[this.transportMode] || L.layerGroup().addTo(this.map);
-    this.routeLayers[this.transportMode] = this.routeLayer;
-    this.routeLayer.clearLayers();
-
-    switch (this.transportMode) {
-      case 'driving':
-        this.loadDrivingRoute(false);
-        break;
-      case 'train':
-        this.loadTrainRoute(false);
-        break;
-      case 'flight':
-        this.loadAutoFlightRoute(false);
-        break;
-    }
   }
 
   private isValidLatLng(latLng: L.LatLngTuple): boolean {
@@ -748,7 +715,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
         return forkJoin([
           this.getCarRouteWithFallback(originalStart, startStationPoint, this.routeColors['train']),
           this.getCarRouteWithFallback(endStationPoint, originalEnd, this.routeColors['train']),
-          of({ startStation, endStation })
+          of({startStation, endStation})
         ]);
       }),
       catchError(error => {
@@ -756,7 +723,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
         return this.handleNoStationsFound(isPartOfSequence);
       })
     ).subscribe({
-      next: ([routeToStation, routeFromStation, { startStation, endStation }]) => {
+      next: ([routeToStation, routeFromStation, {startStation, endStation}]) => {
         // Auto-Routen zeichnen
         if (routeToStation && routeToStation.route) {
           L.polyline(routeToStation.route, {
@@ -846,48 +813,6 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
     // Fallback: direkte Linie zeichnen
     this.handleRouteError(isPartOfSequence, this.routeColors['train'], 4);
     return of(null);
-  }
-
-  private formatDateTime(dateTimeString: string): string {
-    const date = new Date(dateTimeString);
-    return date.toLocaleString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
-  private calculateTrainDistance(journey: any): number {
-    // Diese Methode approximiert die Distanz basierend auf den Segmenten
-    // In einer echten Anwendung würdest du genauere Daten verwenden
-
-    if (!journey || !journey.segments || journey.segments.length === 0) {
-      return this.calculateDirectDistanceValue();
-    }
-
-    // Approximation: 80% der Luftlinie für Zugstrecken (realistischer)
-    return this.calculateDirectDistanceValue() * 1.2;
-  }
-
-  private getStationCoordinates(stationName: string): Observable<L.LatLngTuple | null> {
-    // In einer echten Implementierung würdest du hier einen API-Aufruf machen
-    // Für dieses Beispiel implementieren wir eine Simulation
-
-    // Hier sollte ein echter API-Aufruf zum Geocoding oder zur Flixbus-API stehen
-    return this.httpService.geocode(stationName).pipe(
-      map(result => {
-        if (result && result.lat && result.lon) {
-          return [result.lat, result.lon] as L.LatLngTuple;
-        }
-        return null;
-      }),
-      catchError(error => {
-        console.error('Fehler beim Geocoding der Station:', error);
-        return of(null);
-      })
-    );
   }
 
   private calculateCombinedTrainMetrics(

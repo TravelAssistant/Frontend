@@ -1,12 +1,11 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import {MatButtonToggle, MatButtonToggleGroup} from '@angular/material/button-toggle';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
 
 @Component({
   selector: 'app-location-input',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatButtonToggleGroup, MatButtonToggle],
+  imports: [CommonModule, FormsModule],
   templateUrl: './input.component.html',
   styles: []
 })

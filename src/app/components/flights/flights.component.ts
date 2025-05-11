@@ -13,7 +13,6 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {CommonModule} from '@angular/common';
 import {forkJoin} from 'rxjs';
 import {switchMap} from 'rxjs/operators';
-import {MatButtonToggle, MatButtonToggleGroup} from '@angular/material/button-toggle';
 
 interface Flight {
   id: string;

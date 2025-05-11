@@ -1,14 +1,12 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import {RoutingService} from "../../service/routing/routing.service";
 import {HttpService} from "../../service/http/http.service";
 import {catchError, forkJoin, of, tap} from "rxjs";
 import {MapComponent} from "../map/map.component";
 import {InputComponent} from '../input/input.component';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
-import {CompareComponent} from '../compare/compare.component';
-import {TransportMetrics} from "../compare/compare.component";
+import {CompareComponent, TransportMetrics} from '../compare/compare.component';
 import {FlightsComponent} from "../flights/flights.component";
 import {LatLngTuple} from 'leaflet';
 
@@ -19,7 +17,7 @@ import {LatLngTuple} from 'leaflet';
   templateUrl: './map-page.component.html',
   styleUrl: './map-page.component.css'
 })
-export class MapPageComponent implements OnInit {
+export class MapPageComponent {
 
   @ViewChild(FlightsComponent) flightsComponent!: FlightsComponent;
 
@@ -46,8 +44,8 @@ export class MapPageComponent implements OnInit {
   mapMetrics: { [key: string]: TransportMetrics } = {};
 
   // Speichern der besten Flug/Zug-Preise und -Zeiten
-  flightMetrics: { price: number, duration: number } = { price: 0, duration: 0 };
-  trainMetrics: { price: number, duration: number } = { price: 0, duration: 0 };
+  flightMetrics: { price: number, duration: number } = {price: 0, duration: 0};
+  trainMetrics: { price: number, duration: number } = {price: 0, duration: 0};
 
   airportOrigin: string = '';
   airportDestination: string = '';
@@ -59,25 +57,6 @@ export class MapPageComponent implements OnInit {
   constructor(
     private httpService: HttpService
   ) {
-  }
-
-  ngOnInit(): void {}
-
-  private processLocationInput(type: 'start' | 'end', location: any): void {
-    if (!location) return;
-
-    const isStart = type === 'start';
-    const inputProp = isStart ? 'startLocationInput' : 'endLocationInput';
-    const latLngProp = isStart ? 'startLatLng' : 'endLatLng';
-
-    if (typeof location === 'string') {
-      this[inputProp] = location;
-    } else {
-      this[inputProp] = location.display_name || '';
-      if (location.lat && location.lon) {
-        this[latLngProp] = [location.lat, location.lon];
-      }
-    }
   }
 
   private mapTransportMode(mode: string): void {
@@ -94,17 +73,10 @@ export class MapPageComponent implements OnInit {
     this.transportMode = modeMap[mode] || 'driving';
   }
 
-  onTransportChange(event: any) {
-    this.mapTransportMode(event.target.value);
-    if (this.isValidLatLng(this.startLatLng) && this.isValidLatLng(this.endLatLng)) {
-      this.loadRoute();
-    }
-  }
-
   // Diese Methode wird aufgerufen, wenn in der Compare-Komponente ein Transportmittel ausgewählt wird
   onTransportModeSelected(mode: string) {
     // Mapping von Transport-Modi zu Flights-Komponenten-Modi
-    switch(mode) {
+    switch (mode) {
       case 'driving':
         this.selectedTransportModeForFlights = 'auto';
         break;
@@ -120,20 +92,6 @@ export class MapPageComponent implements OnInit {
 
     // Auch den Transport-Modus für die Map aktualisieren
     this.transportMode = mode;
-  }
-
-  private isValidLatLng(latLng: [number, number]): boolean {
-    // Check if the coordinates are non-zero and in reasonable range
-    return latLng &&
-      latLng[0] !== 0 &&
-      latLng[1] !== 0 &&
-      Math.abs(latLng[0]) <= 90 &&
-      Math.abs(latLng[1]) <= 180;
-  }
-
-  protected loadRoute() {
-    // Nur zur Weiterleitung an die Map-Komponente
-    // Die eigentliche Routenberechnung findet in der Map-Komponente statt
   }
 
   onStartLocationChange(value: string) {
@@ -156,7 +114,13 @@ export class MapPageComponent implements OnInit {
     this.tripType = value;
   }
 
-  onRouteCalculated(event: { distance: number; co2Emissions: number; cost: number; transportMode: string; duration?: number }) {
+  onRouteCalculated(event: {
+    distance: number;
+    co2Emissions: number;
+    cost: number;
+    transportMode: string;
+    duration?: number
+  }) {
     // Speichere die Daten aus der Map-Komponente
     this.mapMetrics[event.transportMode] = {
       mode: event.transportMode,
@@ -282,8 +246,8 @@ export class MapPageComponent implements OnInit {
     this.progressSpinner = true;
     this.transportMetrics = [];
     this.mapMetrics = {};
-    this.flightMetrics = { price: 0, duration: 0 };
-    this.trainMetrics = { price: 0, duration: 0 };
+    this.flightMetrics = {price: 0, duration: 0};
+    this.trainMetrics = {price: 0, duration: 0};
 
     // Original-Code beibehalten...
     forkJoin([
