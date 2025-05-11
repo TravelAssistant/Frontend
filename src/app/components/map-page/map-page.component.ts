@@ -10,6 +10,7 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {CompareComponent} from '../compare/compare.component';
 import {TransportMetrics} from "../compare/compare.component";
 import {FlightsComponent} from "../flights/flights.component";
+import {LatLngTuple} from 'leaflet';
 
 @Component({
   selector: 'app-map-page',
@@ -48,8 +49,14 @@ export class MapPageComponent implements OnInit {
   flightMetrics: { price: number, duration: number } = { price: 0, duration: 0 };
   trainMetrics: { price: number, duration: number } = { price: 0, duration: 0 };
 
+  airportOrigin: string = '';
+  airportDestination: string = '';
+  stationOrigin: string = '';
+  stationDestination: string = '';
+  searchFlightsEnabled: boolean = false;
+  searchTrainsEnabled: boolean = false;
+
   constructor(
-    private routingService: RoutingService,
     private httpService: HttpService
   ) {
   }
@@ -321,5 +328,42 @@ export class MapPageComponent implements OnInit {
   updateFlightAndTrainMetrics(data: any) {
     this.updateFlightMetrics(data.flightPrice, data.flightDuration);
     this.updateTrainMetrics(data.trainPrice, data.trainDuration);
+  }
+
+  onTransportPointsFound(data: {
+    type: 'airport' | 'station';
+    origin: { name: string, coords: LatLngTuple };
+    destination: { name: string, coords: LatLngTuple };
+  }) {
+    if (data.type === 'airport') {
+      this.airportOrigin = this.extractAirportCode(data.origin.name);
+      this.airportDestination = this.extractAirportCode(data.destination.name);
+      this.searchFlightsEnabled = true;
+
+      // Falls die Flights-Komponente bereits angezeigt wird, aktualisiere sie
+      if (this.flightsComponent) {
+        this.flightsComponent.searchMode = 'flug';
+        this.flightsComponent.selectedMode = 'flug';
+        this.flightsComponent.searchFlights();
+      }
+    } else if (data.type === 'station') {
+      this.stationOrigin = data.origin.name;
+      this.stationDestination = data.destination.name;
+      this.searchTrainsEnabled = true;
+
+      // Falls die Flights-Komponente bereits angezeigt wird, aktualisiere sie
+      if (this.flightsComponent) {
+        this.flightsComponent.searchMode = 'zug';
+        this.flightsComponent.selectedMode = 'zug';
+        this.flightsComponent.searchTrain();
+      }
+    }
+  }
+
+  private extractAirportCode(airportName: string): string {
+    // Implementiere hier eine Logik, um den IATA-Code aus dem Namen zu extrahieren
+    // z.B. "Flughafen München (MUC)" -> "MUC"
+    const match = airportName.match(/\(([A-Z]{3})\)/);
+    return match ? match[1] : airportName;
   }
 }

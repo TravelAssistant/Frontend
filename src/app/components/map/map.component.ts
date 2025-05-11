@@ -33,6 +33,12 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
     duration?: number;
   }>();
 
+  @Output() transportPointsFound = new EventEmitter<{
+    type: 'airport' | 'station';
+    origin: { name: string, coords: L.LatLngTuple };
+    destination: { name: string, coords: L.LatLngTuple };
+  }>();
+
   private map!: L.Map;
   private routeLayer!: L.LayerGroup;
   private currentDistance: number = 0;
@@ -68,9 +74,6 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
 
   ngAfterViewInit(): void {
     this.initializeMap();
-    if (this.isValidLatLng(this.startLatLng) && this.isValidLatLng(this.endLatLng)) {
-      this.runAllTransportModes();
-    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -85,11 +88,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
       (changes['transportMode'] && changes['transportMode'].previousValue !== changes['transportMode'].currentValue) &&
       !shouldReloadRoute;
 
-    if (onlyTransportModeChanged) {
-      if (this.isValidLatLng(this.startLatLng) && this.isValidLatLng(this.endLatLng)) {
-        this.loadRoute();
-      }
-    } else if (shouldReloadRoute && this.isValidLatLng(this.startLatLng) && this.isValidLatLng(this.endLatLng)) {
+    if (shouldReloadRoute && this.isValidLatLng(this.startLatLng) && this.isValidLatLng(this.endLatLng)) {
       // Bei neuen Punkten alle Transportmodi nacheinander ausführen
       this.runAllTransportModes();
     }
@@ -425,6 +424,18 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
           weight: 3,
           opacity: 0.7
         }).addTo(this.routeLayer);
+
+        this.transportPointsFound.emit({
+          type: 'airport',
+          origin: {
+            name: startAirport.display_name || '',
+            coords: [startAirport.lat, startAirport.lon]
+          },
+          destination: {
+            name: endAirport.display_name || '',
+            coords: [endAirport.lat, endAirport.lon]
+          }
+        });
 
         // Auto-Routen mit Fallback zur Snap-To-Road-API holen
         return forkJoin([
@@ -789,6 +800,18 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
 
         // Geschätzte Reisezeit berechnen (Zug mit durchschnittlich 80 km/h)
         const trainTimeMinutes = Math.round(trainDistance / 80 * 60);
+
+        this.transportPointsFound.emit({
+          type: 'station',
+          origin: {
+            name: startStation.name || '',
+            coords: [startStation.lat, startStation.lon]
+          },
+          destination: {
+            name: endStation.name || '',
+            coords: [endStation.lat, endStation.lon]
+          }
+        });
 
         // Metriken berechnen
         this.calculateCombinedTrainMetrics(

@@ -20,6 +20,7 @@
              [startLocationName]="startLocationInput"
              [endLocationName]="endLocationInput"
              (routeCalculated)="onRouteCalculated($event)"
+             (transportPointsFound)="onTransportPointsFound($event)"
              class="w-full">
     </app-map>
 
@@ -44,6 +45,11 @@
       [returnDate]="returnDate"
       [isRoundtrip]="tripType === 'roundtrip'"
       [selectedMode]="selectedTransportModeForFlights"
+      [searchMode]="selectedTransportModeForFlights"
+      [originAirport]="airportOrigin"
+      [destinationAirport]="airportDestination"
+      [originStation]="stationOrigin"
+      [destinationStation]="stationDestination"
       (flightDataLoaded)="updateFlightAndTrainMetrics($event)">
     </app-flights>
   </div>

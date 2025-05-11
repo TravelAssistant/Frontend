@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
 import {HttpClientModule} from '@angular/common/http';
 import {FlightApiService} from '../../service/flight-api/flight-api.service';
 import {MatButtonModule} from '@angular/material/button';
@@ -46,15 +46,13 @@ interface Flight {
     MatNativeDateModule,
     FormsModule,
     ReactiveFormsModule,
-    MatButtonToggle,
-    MatButtonToggleGroup
   ],
   templateUrl: './flights.component.html',
   styleUrl: './flights.component.css',
   standalone: true,
   providers: []
 })
-export class FlightsComponent implements OnInit {
+export class FlightsComponent implements OnInit, OnChanges {
 
   @Input() origin = 'Düsseldorf';
   @Input() destination = 'München';
@@ -62,6 +60,11 @@ export class FlightsComponent implements OnInit {
   @Input() returnDate = '';
   @Input() isRoundtrip = false;
   @Input() selectedMode: 'flug' | 'auto' | 'zug' = 'flug';
+  @Input() searchMode: 'flug' | 'auto' | 'zug' = 'flug';
+  @Input() originAirport: string = '';
+  @Input() destinationAirport: string = '';
+  @Input() originStation: string = '';
+  @Input() destinationStation: string = '';
   flights: Flight[] = [];
   selectedFlight: any = null;
   loading = false;
@@ -85,9 +88,6 @@ export class FlightsComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Automatisch bei Initialisierung laden
-    this.searchFlights();
-    this.searchTrain();
   }
 
   private notifyDataLoaded() {
@@ -125,6 +125,22 @@ export class FlightsComponent implements OnInit {
     });
   }
 
+  ngOnChanges(changes: SimpleChanges) {
+    console.log('Changes detected:', changes);
+
+    // Reagiere auf Änderungen der Eingabeeigenschaften
+    if ((changes['searchMode'] || changes['originAirport'] || changes['destinationAirport'])
+      && this.searchMode === 'flug' && this.originAirport && this.destinationAirport) {
+      this.searchFlights();
+    } else if ((changes['searchMode'] || changes['originStation'] || changes['destinationStation'])
+      && this.searchMode === 'zug' && this.originStation && this.destinationStation) {
+      this.searchTrain();
+    } else if (changes['departDate'] || changes['returnDate']) {
+      this.searchFlights();
+      this.searchTrain();
+    }
+  }
+
   searchFlights() {
     this.loading = true;
     this.flights = [];
@@ -132,8 +148,8 @@ export class FlightsComponent implements OnInit {
     this.error = '';
 
     forkJoin({
-      originCode: this.apiService.getAirportCode(this.origin),
-      destCode: this.apiService.getAirportCode(this.destination)
+      originCode: this.apiService.getAirportCode(this.originAirport),
+      destCode: this.apiService.getAirportCode(this.destinationAirport)
     }).pipe(
       switchMap(codes => {
         if (!codes.originCode || !codes.destCode) {
@@ -226,8 +242,8 @@ export class FlightsComponent implements OnInit {
 
     // Zuerst die City-IDs für beide Richtungen holen
     forkJoin([
-      this.apiService.getFlixbusCityId(this.origin),
-      this.apiService.getFlixbusCityId(this.destination)
+      this.apiService.getFlixbusCityId(this.originStation),
+      this.apiService.getFlixbusCityId(this.destinationStation)
     ]).subscribe({
       next: ([originCityId, destinationCityId]) => {
         if (!originCityId || !destinationCityId) {
