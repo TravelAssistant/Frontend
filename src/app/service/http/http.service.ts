@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {catchError, Observable, throwError} from 'rxjs';
 import {environment} from '../../../environments/environment';
+import {map} from 'rxjs/operators';
 
 export interface GeocodingResult {
   lat: number;
@@ -57,6 +58,22 @@ export interface AirportResponse {
   icao_code?: string;
   iata_code?: string;
   distance?: number;
+}
+
+export interface StationRequest {
+  lat: number;
+  lon: number;
+  radius?: number;
+  limit?: number;
+}
+
+export interface Station {
+  name: string;
+  lat: number;
+  lon: number;
+  distance: number;
+  category_ids: number[];
+  category_names: string[];
 }
 
 @Injectable({
@@ -127,6 +144,31 @@ export class HttpService {
       .pipe(
         catchError(error => {
           console.error('Metrics calculation error:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  findNearestStation(lat: number, lon: number, radius: number = 20000): Observable<Station> {
+    console.log('Finding nearest station for coordinates:', lat, lon);
+
+    const request: StationRequest = {
+      lat: lat,
+      lon: lon,
+      radius: radius,
+      limit: 1
+    };
+
+    return this.http.post<{stations: Station[]}>(`${this.apiUrl}/nearest-station`, request)
+      .pipe(
+        map(response => {
+          if (response && response.stations && response.stations.length > 0) {
+            return response.stations[0];
+          }
+          throw new Error('Keine Station gefunden');
+        }),
+        catchError(error => {
+          console.error('Station search error:', error);
           return throwError(() => error);
         })
       );

@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {HttpClientModule} from '@angular/common/http';
 import {FlightApiService} from '../../service/flight-api/flight-api.service';
 import {MatButtonModule} from '@angular/material/button';
@@ -13,7 +13,6 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {CommonModule} from '@angular/common';
 import {forkJoin} from 'rxjs';
 import {switchMap} from 'rxjs/operators';
-import {MatSlideToggle} from '@angular/material/slide-toggle';
 import {MatButtonToggle, MatButtonToggleGroup} from '@angular/material/button-toggle';
 
 interface Flight {
@@ -47,42 +46,83 @@ interface Flight {
     MatNativeDateModule,
     FormsModule,
     ReactiveFormsModule,
-    MatSlideToggle,
     MatButtonToggle,
     MatButtonToggleGroup
   ],
   templateUrl: './flights.component.html',
   styleUrl: './flights.component.css',
   standalone: true,
-  providers: [FlightApiService]
+  providers: []
 })
 export class FlightsComponent implements OnInit {
 
-  origin = 'Düsseldorf';
-  destination = 'München';
-  departDate = '2025-05-07';
+  @Input() origin = 'Düsseldorf';
+  @Input() destination = 'München';
+  @Input() departDate = '2025-05-07';
+  @Input() returnDate = '';
+  @Input() isRoundtrip = false;
+  @Input() selectedMode: 'flug' | 'auto' | 'zug' = 'flug';
   flights: Flight[] = [];
   selectedFlight: any = null;
   loading = false;
   error = '';
   showAllFlights = false;
-  returnDate = '';
-  isRoundtrip = false;
-
-// Umschalt-Status: 'flug', 'auto', 'zug'
-  selectedMode: 'flug' | 'auto' | 'zug' = 'flug';
 
   trainJourneys: any[] = [];
 
+  activeFilter: 'none' | 'cheapest' | 'fastest' = 'none';
+  originalFlights: Flight[] = [];
+  originalTrainJourneys: any[] = [];
+
+  @Output() flightDataLoaded = new EventEmitter<{
+    flightPrice: number;
+    flightDuration: number;
+    trainPrice: number;
+    trainDuration: number;
+  }>();
+
   constructor(private apiService: FlightApiService) {
   }
-
-
 
   ngOnInit() {
     // Automatisch bei Initialisierung laden
     this.searchFlights();
     this.searchTrain();
+  }
+
+  private notifyDataLoaded() {
+    let flightPrice = 0;
+    let flightDuration = 0;
+    let trainPrice = 0;
+    let trainDuration = 0;
+
+    if (this.flights.length > 0) {
+      const cheapestFlight = [...this.flights].sort((a, b) => a.price - b.price)[0];
+      const fastestFlight = [...this.flights].sort((a, b) => a.duration - b.duration)[0];
+      flightPrice = cheapestFlight.price;
+      flightDuration = fastestFlight.duration;
+    }
+
+    if (this.trainJourneys.length > 0) {
+      // Ähnliche Logik wie im MapPageComponent
+      const prices = this.trainJourneys.map(journey => {
+        return (journey.outbound?.price || 0) +
+          (this.isRoundtrip && journey.inbound ? journey.inbound.price || 0 : 0);
+      });
+      trainPrice = Math.min(...prices.filter(p => p > 0));
+
+      const durations = this.trainJourneys
+        .map(journey => journey.outbound?.duration || 0)
+        .filter(d => d > 0);
+      trainDuration = durations.length > 0 ? Math.min(...durations) : 0;
+    }
+
+    this.flightDataLoaded.emit({
+      flightPrice,
+      flightDuration,
+      trainPrice,
+      trainDuration
+    });
   }
 
   searchFlights() {
@@ -133,6 +173,9 @@ export class FlightsComponent implements OnInit {
           this.error = 'Keine Flüge gefunden';
           this.loading = false;
         }
+
+        this.originalFlights = [...this.flights];
+        this.notifyDataLoaded()
       },
       error: (err) => {
         this.error = 'Fehler bei der Flugsuche: ' + err.message;
@@ -233,6 +276,9 @@ export class FlightsComponent implements OnInit {
               }
               this.trainJourneys = journeys;
               this.loading = false;
+
+              this.originalTrainJourneys = [...this.trainJourneys];
+              this.notifyDataLoaded();
             },
             error: () => {
               this.error = 'Fehler beim Abrufen der Hin- oder Rückfahrt.';
@@ -249,6 +295,9 @@ export class FlightsComponent implements OnInit {
                   inbound: null
                 }));
                 this.loading = false;
+
+                this.originalTrainJourneys = [...this.trainJourneys];
+                this.notifyDataLoaded();
               },
               error: () => {
                 this.error = 'Fehler beim Abrufen der Verbindungen.';
@@ -286,6 +335,8 @@ export class FlightsComponent implements OnInit {
       default:
         this.searchFlights();
     }
+
+    this.activeFilter = 'none';
   }
 
 
@@ -304,5 +355,82 @@ export class FlightsComponent implements OnInit {
     return this.showAllFlights ? this.flights : this.flights.slice(0, 9);
   }
 
+  applyFilter(): void {
+    if (this.activeFilter === 'none') {
+      // Zurücksetzen auf ursprüngliche Listen
+      this.flights = [...this.originalFlights];
+      this.trainJourneys = [...this.originalTrainJourneys];
+      return;
+    }
+
+    if (this.selectedMode === 'flug') {
+      this.flights = [...this.originalFlights]; // Kopie erstellen
+
+      if (this.activeFilter === 'cheapest') {
+        this.flights.sort((a, b) => a.price - b.price);
+      } else if (this.activeFilter === 'fastest') {
+        this.flights.sort((a, b) => a.duration - b.duration);
+      }
+
+      // Optional: nur die besten 5 anzeigen
+      this.flights = this.flights.slice(0, this.originalFlights.length);
+    } else if (this.selectedMode === 'zug') {
+      this.trainJourneys = [...this.originalTrainJourneys]; // Kopie erstellen
+
+      if (this.activeFilter === 'cheapest') {
+        this.trainJourneys.sort((a, b) => {
+          const priceA = (a.outbound?.price || 0) + (this.isRoundtrip && a.inbound ? a.inbound.price || 0 : 0);
+          const priceB = (b.outbound?.price || 0) + (this.isRoundtrip && b.inbound ? b.inbound.price || 0 : 0);
+          return priceA - priceB;
+        });
+      } else if (this.activeFilter === 'fastest') {
+        this.trainJourneys.sort((a, b) => {
+          // Bei Hin- und Rückfahrt die Gesamtdauer berücksichtigen
+          const durationA = a.outbound?.duration || 0;
+          const durationB = b.outbound?.duration || 0;
+          return durationA - durationB;
+        });
+      }
+
+      // Optional: nur die besten 5 anzeigen
+      this.trainJourneys = this.trainJourneys.slice(0, this.originalTrainJourneys.length);
+    }
+  }
+
+  isBestOption(flight: Flight, filterType: string): boolean {
+    if (filterType === 'none' || this.flights.length === 0) return false;
+
+    if (filterType === 'cheapest') {
+      return flight.price === Math.min(...this.flights.map(f => f.price));
+    }
+
+    if (filterType === 'fastest') {
+      return flight.duration === Math.min(...this.flights.map(f => f.duration));
+    }
+
+    return false;
+  }
+
+  isBestTrainOption(pair: any, filterType: string): boolean {
+    if (filterType === 'none' || this.trainJourneys.length === 0) return false;
+
+    if (filterType === 'cheapest') {
+      const totalPrice = (pair.outbound?.price || 0) +
+        (this.isRoundtrip && pair.inbound ? pair.inbound.price || 0 : 0);
+      const allPrices = this.trainJourneys.map(j =>
+        (j.outbound?.price || 0) +
+        (this.isRoundtrip && j.inbound ? j.inbound.price || 0 : 0)
+      );
+      return totalPrice === Math.min(...allPrices);
+    }
+
+    if (filterType === 'fastest') {
+      const duration = pair.outbound?.duration || 0;
+      const allDurations = this.trainJourneys.map(j => j.outbound?.duration || 0);
+      return duration === Math.min(...allDurations);
+    }
+
+    return false;
+  }
 
 }

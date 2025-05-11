@@ -7,13 +7,8 @@ import {map, Observable} from 'rxjs';
   providedIn: 'root'
 })
 export class FlightApiService {
-  private apiUrl= environment.flightApi.url;
-  private apiKey = environment.flightApi.key;
 
-  private apiUrlFlixbus = environment.flixbusApi.url;
-  private apiKeyFlixbus = environment.flixbusApi.key;
-
-  private apiBaseUrl = environment.apiBaseUrl;
+  private apiBaseUrl = environment.travelApiUrl;
 
 
   constructor(private http: HttpClient) {
@@ -72,8 +67,6 @@ export class FlightApiService {
       date
     });
   }
-
-
 }
 
 

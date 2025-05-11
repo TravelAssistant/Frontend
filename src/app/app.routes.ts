@@ -6,23 +6,7 @@ import {FlightsComponent} from './components/flights/flights.component';
 
 export const routes: Routes = [
   {
-    component: ProfileComponent,
-    path: 'profile',
-  },
-  {
-    component: SelectionComponent,
-    path: '',
-  },
-  {
-    component: ProfileComponent,
-    path: 'profile',
-  },
-  {
     component: MapPageComponent,
-    path: 'map',
-  },
-  {
-    component: FlightsComponent,
-    path: 'flights',
+    path: '',
   }
 ];

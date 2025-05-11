@@ -3,9 +3,13 @@
     [startLocation]="startLocationInput"
     [endLocation]="endLocationInput"
     [travelDate]="travelDate"
+    [returnDate]="returnDate"
+    [tripType]="tripType"
     (startLocationChange)="onStartLocationChange($event)"
     (endLocationChange)="onEndLocationChange($event)"
     (travelDateChange)="onTravelDateChange($event)"
+    (returnDateChange)="onReturnDateChange($event)"
+    (tripTypeChange)="onTripTypeChange($event)"
     (searchLocations)="calculateRoute()"
   ></app-location-input>
 
@@ -28,6 +32,19 @@
 
   <!-- Integration der Compare-Komponente -->
   <div class="mt-8" *ngIf="transportMetrics.length > 0">
-    <app-compare [transportMetrics]="transportMetrics"></app-compare>
+    <app-compare [transportMetrics]="transportMetrics" (transportModeSelected)="onTransportModeSelected($event)"></app-compare>
+  </div>
+
+  <!-- Integration der Flights-Komponente -->
+  <div class="mt-8" *ngIf="transportMetrics.length > 0">
+    <app-flights
+      [origin]="startLocationInput"
+      [destination]="endLocationInput"
+      [departDate]="travelDate"
+      [returnDate]="returnDate"
+      [isRoundtrip]="tripType === 'roundtrip'"
+      [selectedMode]="selectedTransportModeForFlights"
+      (flightDataLoaded)="updateFlightAndTrainMetrics($event)">
+    </app-flights>
   </div>
 </div>

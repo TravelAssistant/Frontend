@@ -239,4 +239,42 @@
   display: block;
 }
 
+.filter-options {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+mat-button-toggle-group {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+mat-button-toggle {
+  padding: 0 12px;
+}
+
+.mat-button-toggle-checked {
+  background-color: #1976d2;
+  color: white;
+}
+
+.best-option-badge {
+  display: flex;
+  align-items: center;
+  background-color: #4caf50;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 16px;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.best-option-badge mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+}
+
 
