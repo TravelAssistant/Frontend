@@ -1,0 +1,8 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.styled-tiles {
+  filter: grayscale(0.2) brightness(1.05);
+}

@@ -1,76 +1,72 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {environment} from '../../../environments/environment';
 import {HttpClient} from '@angular/common/http';
-import {Observable, map} from 'rxjs';
+import {map, Observable} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FlightApiService {
-  private apiUrl= environment.flightApi.url;
-  private apiKey = environment.flightApi.key;
 
-  constructor(private http: HttpClient) { }
+  private apiBaseUrl = environment.travelApiUrl;
 
-  getAllFlights(from: string, to: string): Observable<any> {
-    return this.http.get(`https://${this.apiUrl}/flights/search-one-way?fromEntityId=${from}&toEntityId=${to}&cabinClass=economy`, {
-      headers: {
-        'x-rapidapi-host': this.apiUrl,
-        'x-rapidapi-key': this.apiKey
-      }
-    });
+
+  constructor(private http: HttpClient) {
   }
 
-  getOneFlight(token: string, ItineraryId: string): Observable<any> {
-    return this.http.get(`https://${this.apiUrl}/flights/flights/detail?token=${token}&itineraryId=${ItineraryId}`, {
-      headers: {
-        'x-rapidapi-host': this.apiUrl,
-        'x-rapidapi-key': this.apiKey
-      }
-    })
-
-  }
-
-  // 1. Flughafencodes für Start und Ziel ermitteln
   getAirportCode(query: string): Observable<string> {
-    return this.http.get(`https://${this.apiUrl}/flights/auto-complete?query=${encodeURIComponent(query)}`, {
-      headers: {
-        'x-rapidapi-host': this.apiUrl,
-        'x-rapidapi-key': this.apiKey
-      }
+    return this.http.post(`${this.apiBaseUrl}/flights`, {
+      type: 'airportCode',
+      query
     }).pipe(
-      map((response: any) => {
-        // Suche nach dem ersten Ergebnis mit entityType AIRPORT
-        const airport = response.data.find((item: { navigation: { entityType: string; }; }) => item.navigation.entityType === 'AIRPORT');
-        return airport ? airport.navigation.relevantFlightParams.skyId : '';
-      })
+      map((response: any) => response.airportCode)
     );
   }
 
-  // 2. Flugsuche mit den Flughafencodes und Datum
   searchFlights(fromCode: string, toCode: string, date: string): Observable<any> {
-    return this.http.get(`https://${this.apiUrl}/flights/search-one-way?fromEntityId=${fromCode}&toEntityId=${toCode}&departDate=${date}&cabinClass=economy`, {
-      headers: {
-        'x-rapidapi-host': this.apiUrl,
-        'x-rapidapi-key': this.apiKey
-      }
+    return this.http.post(`${this.apiBaseUrl}/flights`, {
+      type: 'search',
+      fromCode,
+      toCode,
+      date
     });
   }
 
-  // 3. Detailabfrage für einen spezifischen Flug
+  searchRoundtripFlights(fromCode: string, toCode: string, departDate: string, returnDate: string): Observable<any> {
+    return this.http.post(`${this.apiBaseUrl}/flights`, {
+      type: 'roundtrip',
+      fromCode,
+      toCode,
+      date: departDate,
+      returnDate
+    });
+  }
+
   getFlightDetails(token: string, itineraryId: string): Observable<any> {
-    return this.http.get(`https://${this.apiUrl}/flights/detail?token=${token}&itineraryId=${itineraryId}`, {
-      headers: {
-        'x-rapidapi-host': this.apiUrl,
-        'x-rapidapi-key': this.apiKey
-      }
+    return this.http.post(`${this.apiBaseUrl}/flights`, {
+      type: 'details',
+      token,
+      itineraryId
     });
   }
 
+  getFlixbusCityId(query: string): Observable<string> {
+    return this.http.post(`${this.apiBaseUrl}/flixbus`, {
+      type: 'cityId',
+      query
+    }).pipe(
+      map((response: any) => response.cityId)
+    );
+  }
 
-
-
-
+  searchBusTrips(fromId: string, toId: string, date: string): Observable<any> {
+    return this.http.post(`${this.apiBaseUrl}/flixbus`, {
+      type: 'search',
+      fromId,
+      toId,
+      date
+    });
+  }
 }
 
 
