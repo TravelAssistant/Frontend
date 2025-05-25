@@ -1,0 +1,15 @@
+/* Für zusätzliche benutzerdefinierte Stile */
+.best-option {
+  position: relative;
+}
+
+.best-option::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 30px;
+  height: 30px;
+  background-color: #10B981;
+  border-radius: 50%;
+}

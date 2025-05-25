@@ -1,3 +1,251 @@
-<p>flights works!</p>
+<div class="container mx-auto px-4 py-6">
+  <!-- Filter-Optionen -->
+  <div class="flex justify-center my-6" *ngIf="(flights.length > 0 && selectedMode === 'flug') || (trainJourneys.length > 0 && selectedMode === 'zug')">
+    <div class="bg-gray-800 rounded-full p-1 inline-flex shadow-lg">
+      <button
+        [class.bg-gradient-to-r]="activeFilter === 'none'"
+        [class.from-blue-600]="activeFilter === 'none'"
+        [class.to-indigo-700]="activeFilter === 'none'"
+        [class.text-white]="activeFilter === 'none'"
+        [class.text-gray-400]="activeFilter !== 'none'"
+        (click)="activeFilter = 'none'; applyFilter()"
+        class="py-2 px-4 rounded-full transition-all duration-200 font-medium">
+        Alle anzeigen
+      </button>
+      <button
+        [class.bg-gradient-to-r]="activeFilter === 'cheapest'"
+        [class.from-blue-600]="activeFilter === 'cheapest'"
+        [class.to-indigo-700]="activeFilter === 'cheapest'"
+        [class.text-white]="activeFilter === 'cheapest'"
+        [class.text-gray-400]="activeFilter !== 'cheapest'"
+        (click)="activeFilter = 'cheapest'; applyFilter()"
+        class="py-2 px-4 rounded-full transition-all duration-200 font-medium">
+        <i class="fas fa-euro-sign mr-1"></i> Günstigste
+      </button>
+      <button
+        [class.bg-gradient-to-r]="activeFilter === 'fastest'"
+        [class.from-blue-600]="activeFilter === 'fastest'"
+        [class.to-indigo-700]="activeFilter === 'fastest'"
+        [class.text-white]="activeFilter === 'fastest'"
+        [class.text-gray-400]="activeFilter !== 'fastest'"
+        (click)="activeFilter = 'fastest'; applyFilter()"
+        class="py-2 px-4 rounded-full transition-all duration-200 font-medium">
+        <i class="fas fa-tachometer-alt mr-1"></i> Schnellste
+      </button>
+    </div>
+  </div>
 
-<button mat-raised-button (click)="click()">flight</button>
+  <!-- Flug-Modus -->
+  <div *ngIf="selectedMode === 'flug'">
+    <div class="container mx-auto" *ngIf="flights.length > 0 && !loading && !selectedFlight">
+      <h2 class="text-2xl font-bold text-center mb-8 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">Verfügbare Flüge</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div *ngFor="let flight of flights | slice:0:(showAllFlights ? flights.length : 9)"
+             class="bg-gray-900 rounded-xl shadow-lg p-6 border border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:shadow-blue-400/20">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+              <div class="rounded-full p-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex items-center justify-center mr-3">
+                <i class="fas fa-plane"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-100">{{ flight.airline }}</h3>
+                <span *ngIf="flight.direct" class="text-green-400 text-sm font-medium">Direktflug</span>
+                <span *ngIf="!flight.direct" class="text-gray-400 text-sm">Mit Zwischenstopp</span>
+              </div>
+            </div>
+
+            <div *ngIf="isBestOption(flight, activeFilter)"
+                 class="py-1 px-3 bg-gradient-to-r rounded-full text-sm font-semibold text-white flex items-center"
+                 [class.from-green-500]="activeFilter === 'fastest'"
+                 [class.to-green-700]="activeFilter === 'fastest'"
+                 [class.from-blue-500]="activeFilter === 'cheapest'"
+                 [class.to-blue-700]="activeFilter === 'cheapest'">
+              <i class="fas mr-1" [class.fa-euro-sign]="activeFilter === 'cheapest'" [class.fa-bolt]="activeFilter === 'fastest'"></i>
+              {{ activeFilter === 'cheapest' ? 'Günstigste Option' : 'Schnellste Option' }}
+            </div>
+          </div>
+
+          <div class="flight-info bg-gray-800 rounded-lg p-4">
+            <!-- Hinflug -->
+            <div class="flex items-center justify-between">
+              <div class="text-center">
+                <p class="text-xl font-bold text-gray-100">{{ formatDate(flight.departure) }}</p>
+                <p class="text-gray-400">{{ flight.origin }}</p>
+              </div>
+
+              <div class="flex-1 px-4 relative">
+                <div class="h-0.5 bg-gray-600 w-full relative">
+                  <div class="absolute -top-1 left-0 w-2 h-2 rounded-full bg-gray-400"></div>
+                  <div class="absolute -top-1 right-0 w-2 h-2 rounded-full bg-gray-400"></div>
+                </div>
+                <p class="text-center text-gray-400 mt-2 text-sm">{{ formatDuration(flight.duration) }}</p>
+              </div>
+
+              <div class="text-center">
+                <p class="text-xl font-bold text-gray-100">{{ formatDate(flight.arrival) }}</p>
+                <p class="text-gray-400">{{ flight.destination }}</p>
+              </div>
+            </div>
+
+            <!-- Rückflug (falls vorhanden) -->
+            <div *ngIf="isRoundtrip && flight.returnDeparture" class="mt-4 pt-4 border-t border-gray-700">
+              <div class="flex items-center justify-between">
+                <div class="text-center">
+                  <p class="text-xl font-bold text-gray-100">{{ formatDate(flight.returnDeparture) }}</p>
+                  <p class="text-gray-400">{{ flight.destination }}</p>
+                </div>
+
+                <div class="flex-1 px-4 relative">
+                  <div class="h-0.5 bg-gray-600 w-full relative">
+                    <div class="absolute -top-1 left-0 w-2 h-2 rounded-full bg-gray-400"></div>
+                    <div class="absolute -top-1 right-0 w-2 h-2 rounded-full bg-gray-400"></div>
+                  </div>
+                  <p class="text-center text-gray-400 mt-2 text-sm">{{ formatDuration(flight.duration) }}</p>
+                </div>
+
+                <div class="text-center">
+                  <p class="text-xl font-bold text-gray-100">{{ formatDate(flight.returnArrival ?? '') }}</p>
+                  <p class="text-gray-400">{{ flight.origin }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-700 text-right">
+              <p class="text-2xl font-bold text-gradient bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
+                {{ flight.price | currency:'EUR' }}
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-4 flex justify-end">
+            <button (click)="getFlightDetails(flight)"
+                    class="bg-gradient-to-r from-blue-500 to-indigo-700 hover:from-blue-600 hover:to-indigo-800 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-all transform hover:scale-105 hover:shadow-blue-400/50">
+              Flug buchen <i class="fas fa-shopping-cart ml-2"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mehr/Weniger anzeigen Button -->
+      <div class="flex justify-center mt-8" *ngIf="flights.length > 9">
+        <button (click)="showAllFlights = !showAllFlights"
+                class="bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold py-2 px-6 rounded-full border border-gray-700 shadow-lg transition-all hover:shadow-blue-400/20">
+          {{ showAllFlights ? 'Weniger anzeigen' : 'Weitere Flüge anzeigen' }}
+          <i class="fas" [class.fa-chevron-up]="showAllFlights" [class.fa-chevron-down]="!showAllFlights"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auto-Modus -->
+  <div *ngIf="selectedMode === 'auto'" class="flex flex-col items-center justify-center mt-8">
+    <img src="../../../assets/luke-schobert-swXFC8du1hs-unsplash.jpg"
+         alt="Auto" class="max-w-sm w-full rounded-xl shadow-lg">
+    <h2 class="text-xl font-bold mt-6 mb-2 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">Reise mit dem Auto</h2>
+    <p class="text-gray-200 text-center">Plane deine Fahrt individuell und flexibel. <br>Die Strecke von {{ origin }} nach {{ destination }} beträgt ca. 600 km.</p>
+  </div>
+
+  <!-- Zug/Bus-Modus -->
+  <div *ngIf="selectedMode === 'zug'" class="container mx-auto">
+    <h2 class="text-2xl font-bold text-center mb-8 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">Verfügbare Zug-/Busverbindungen</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div *ngFor="let pair of trainJourneys"
+           class="bg-gray-900 rounded-xl shadow-lg p-6 border border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:shadow-blue-400/20">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center">
+            <div class="rounded-full p-2 bg-gradient-to-r from-green-600 to-green-800 text-white flex items-center justify-center mr-3">
+              <i class="fas fa-train"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-gray-100">FlixBus</h3>
+              <span *ngIf="pair.outbound?.direct" class="text-green-400 text-sm font-medium">Direktverbindung</span>
+              <span *ngIf="!pair.outbound?.direct" class="text-gray-400 text-sm">Umstieg erforderlich</span>
+            </div>
+          </div>
+
+          <div *ngIf="isBestTrainOption(pair, activeFilter)"
+               class="py-1 px-3 bg-gradient-to-r rounded-full text-sm font-semibold text-white flex items-center"
+               [class.from-green-500]="activeFilter === 'fastest'"
+               [class.to-green-700]="activeFilter === 'fastest'"
+               [class.from-blue-500]="activeFilter === 'cheapest'"
+               [class.to-blue-700]="activeFilter === 'cheapest'">
+            <i class="fas mr-1" [class.fa-euro-sign]="activeFilter === 'cheapest'" [class.fa-bolt]="activeFilter === 'fastest'"></i>
+            {{ activeFilter === 'cheapest' ? 'Günstigste Option' : 'Schnellste Option' }}
+          </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg p-4">
+          <!-- Hinfahrt -->
+          <div class="flex items-center justify-between">
+            <div class="text-center">
+              <p class="text-xl font-bold text-gray-100">{{ formatDate(pair.outbound?.departure) }}</p>
+              <p class="text-gray-400">{{ pair.outbound?.origin }}</p>
+            </div>
+
+            <div class="flex-1 px-4 relative">
+              <div class="h-0.5 bg-gray-600 w-full relative">
+                <div class="absolute -top-1 left-0 w-2 h-2 rounded-full bg-gray-400"></div>
+                <div class="absolute -top-1 right-0 w-2 h-2 rounded-full bg-gray-400"></div>
+              </div>
+              <p class="text-center text-gray-400 mt-2 text-sm">{{ formatDuration(pair.outbound?.duration) }}</p>
+            </div>
+
+            <div class="text-center">
+              <p class="text-xl font-bold text-gray-100">{{ formatDate(pair.outbound?.arrival) }}</p>
+              <p class="text-gray-400">{{ pair.outbound?.destination }}</p>
+            </div>
+          </div>
+
+          <!-- Rückfahrt (falls vorhanden) -->
+          <div *ngIf="isRoundtrip && pair.inbound" class="mt-4 pt-4 border-t border-gray-700">
+            <div class="flex items-center justify-between">
+              <div class="text-center">
+                <p class="text-xl font-bold text-gray-100">{{ formatDate(pair.inbound?.departure) }}</p>
+                <p class="text-gray-400">{{ pair.inbound?.origin }}</p>
+              </div>
+
+              <div class="flex-1 px-4 relative">
+                <div class="h-0.5 bg-gray-600 w-full relative">
+                  <div class="absolute -top-1 left-0 w-2 h-2 rounded-full bg-gray-400"></div>
+                  <div class="absolute -top-1 right-0 w-2 h-2 rounded-full bg-gray-400"></div>
+                </div>
+                <p class="text-center text-gray-400 mt-2 text-sm">{{ formatDuration(pair.inbound?.duration) }}</p>
+              </div>
+
+              <div class="text-center">
+                <p class="text-xl font-bold text-gray-100">{{ formatDate(pair.inbound?.arrival) }}</p>
+                <p class="text-gray-400">{{ pair.inbound?.destination }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-gray-700 text-right">
+            <p class="text-2xl font-bold text-gradient bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
+              {{ pair.outbound?.price | currency:pair.outbound?.currency }}
+              <span *ngIf="isRoundtrip && pair.inbound && pair.inbound.price">
+                + {{ pair.inbound.price | currency:pair.inbound.currency }}
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-4 flex justify-end">
+          <a *ngIf="pair.outbound?.deeplink" [href]="pair.outbound?.deeplink" target="_blank"
+             class="bg-gradient-to-r from-blue-500 to-indigo-700 hover:from-blue-600 hover:to-indigo-800 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-all transform hover:scale-105 hover:shadow-blue-400/50 mr-2">
+            Hinfahrt buchen <i class="fas fa-shopping-cart ml-1"></i>
+          </a>
+          <a *ngIf="isRoundtrip && pair.inbound?.deeplink" [href]="pair.inbound?.deeplink" target="_blank"
+             class="bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-all transform hover:scale-105 hover:shadow-green-400/50">
+            Rückfahrt buchen <i class="fas fa-shopping-cart ml-1"></i>
+          </a>
+          <button *ngIf="!pair.outbound?.deeplink" disabled
+                  class="bg-gray-700 text-gray-400 font-bold py-2 px-4 rounded-full">
+            Buchung nicht verfügbar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

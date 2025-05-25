@@ -1,0 +1,20 @@
+/* Verbesserte Lesbarkeit für Eingabefelder */
+input::placeholder {
+  color: #9ca3af; /* gray-400 */
+  opacity: 1;
+}
+
+/* Datumseingabefelder besser lesbar machen */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+}
+
+/* Fokuseffekt für mehr Kontrast */
+input:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Bessere Hover-Effekte für Buttons */
+button:hover {
+  transform: translateY(-1px);
+}
