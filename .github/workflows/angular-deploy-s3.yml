@@ -39,6 +39,7 @@ jobs:
             production: true,
             openRouteServiceApiKey: '${{ secrets.OPEN_ROUTE_SERVICE_API_KEY }}',
             openAipApiKey: '',
+            travelApiUrl: '${{ secrets.TRAVEL_API_URL }}',
             flightApi: {
               url: 'sky-scanner3.p.rapidapi.com',
               key: '${{ secrets.FLIGHT_API_KEY }}',
