@@ -10,11 +10,11 @@ export const routes: Routes = [
   },
   {
     component: TeamSectionComponent,
-    path: '/team',
+    path: 'team',
   },
   {
     component: ImpressumComponent,
-    path: '/impressum',
+    path: 'impressum',
   },
   {
     component: MapPageComponent,
