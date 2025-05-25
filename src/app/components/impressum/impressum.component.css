@@ -1,0 +1,36 @@
+.impressum-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  color: #030303;
+}
+
+.impressum-container h1 {
+  font-size: 25px;
+  font-weight: bold;
+  color: #030303;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.impressum-section {
+  margin-bottom: 30px;
+}
+
+.impressum-section h2 {
+  color: #030303;
+  border-bottom: 1px solid #9b9f9c;
+  padding-bottom: 5px;
+  margin-bottom: 15px;
+}
+
+.impressum-section h3 {
+  color: #030303;
+  margin-top: 20px;
+}
+
+.impressum-section p {
+  margin-bottom: 10px;
+}

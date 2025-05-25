@@ -3,6 +3,8 @@ import {ProfileComponent} from './components/profile/profile.component';
 import {SelectionComponent} from './components/selection/selection.component';
 import {MapPageComponent} from './components/map-page/map-page.component';
 import {FlightsComponent} from './components/flights/flights.component';
+import {TeamSectionComponent} from './components/team-section/team-section.component';
+import {ImpressumComponent} from './components/impressum/impressum.component';
 
 export const routes: Routes = [
   {
@@ -24,5 +26,15 @@ export const routes: Routes = [
   {
     component: FlightsComponent,
     path: 'flights',
+  },
+
+  {
+    component: TeamSectionComponent,
+    path: 'team',
+  },
+  {
+    component: ImpressumComponent,
+    path: 'impressum',
   }
+
 ];
